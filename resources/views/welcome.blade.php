@@ -225,8 +225,7 @@
         .sintem-input { font-family: 'Lato', sans-serif; }
         .sintem-input:focus {
             outline: none;
-            border-color: #9025FB;
-            box-shadow: 0 0 0 4px rgba(144,37,251,0.13);
+            box-shadow: none;
         }
 
         ::-webkit-scrollbar { width: 5px; }
@@ -281,30 +280,10 @@
 
                 <nav class="hidden md:flex items-center gap-7">
                     <a href="#" class="nav-link">Pengumuman</a>
-
-                    <div class="relative dropdown-wrapper">
-                        <button class="nav-link flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0">
-                            Kategori
-                            <svg class="w-3 h-3 text-gray-400 mt-0.5" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8">
-                                <path d="M1 1l4 4 4-4"/>
-                            </svg>
-                        </button>
-                        <div class="dropdown-menu">
-                            <a href="#" class="dropdown-item">Akademik</a>
-                            <a href="#" class="dropdown-item">Ekstrakurikuler</a>
-                            <a href="#" class="dropdown-item">Fasilitas</a>
-                            <a href="#" class="dropdown-item">Beasiswa</a>
-                        </div>
-                    </div>
-
+                    <a href="#" class="nav-link">Kalender Event</a>
                     <a href="#" class="nav-link">Laporkan</a>
                     <a href="#" class="nav-link">Lost &amp; Found</a>
                 </nav>
-
-                <div class="hidden md:flex items-center gap-2.5">
-                    <a href="{{ url('/login') }}" class="btn-outline text-sm font-bold px-4 py-2 rounded-xl text-gray-700">Masuk</a>
-                    <a href="{{ url('/register') }}" class="btn-sintem text-sm font-bold px-4 py-2 rounded-xl text-white shadow-md">Daftar</a>
-                </div>
 
                 <button id="menu-toggle" class="md:hidden p-2 rounded-lg hover:bg-purple-50 transition-colors" aria-label="Menu">
                     <svg id="icon-open" class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,16 +299,14 @@
         <div id="mobile-menu" class="md:hidden border-t border-purple-50/60">
             <div class="px-4 py-4 space-y-0.5 bg-white/96">
                 <a href="#" class="block px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Pengumuman</a>
-                <a href="#" class="block px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Kategori</a>
+                <a href="#" class="block px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Kalender Event</a>
                 <a href="#" class="block px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Laporkan</a>
                 <a href="#" class="block px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Lost &amp; Found</a>
-                <div class="pt-3 pb-1 flex gap-2">
-                </div>
             </div>
         </div>
     </header>
 
-    /HERO/
+    {{-- HERO --}}
     <section class="hero-bg flex flex-col items-center justify-center pt-16 px-4 sm:px-6">
         <div class="dots-pattern"></div>
         <div class="orb orb-1"></div>
@@ -337,11 +314,6 @@
         <div class="orb orb-3"></div>
 
         <div class="relative z-10 max-w-2xl mx-auto text-center py-28 sm:py-36">
-
-            <div class="hero-badge inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-200 bg-purple-50/80 mb-8">
-                <span class="w-1.5 h-1.5 rounded-full inline-block" style="background: var(--gradient);"></span>
-                <span class="text-xs font-bold text-purple-700 tracking-wide">Sistem Informasi Terintegrasi</span>
-            </div>
 
             <h1 class="headline font-extrabold leading-[1.08] tracking-tight mb-6
                         text-[44px] sm:text-[60px] lg:text-[72px]">
