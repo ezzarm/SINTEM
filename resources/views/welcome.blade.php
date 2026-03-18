@@ -232,6 +232,39 @@
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #f3f3f3; }
         ::-webkit-scrollbar-thumb { background: var(--gradient); border-radius: 3px; }
+
+        /* Footer */
+        .footer-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(144,37,251,0.20) 30%, rgba(70,23,211,0.25) 50%, rgba(144,37,251,0.20) 70%, transparent 100%);
+        }
+        .footer-fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .footer-fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .footer-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: inline-block;
+            animation: pulseDot 2.4s ease-in-out infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%       { transform: scale(1.5); opacity: 0.6; }
+        }
+        .footer-link {
+            color: #9ca3af;
+            font-size: 13px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-link:hover { color: #9025FB; }
     </style>
 </head>
 
@@ -242,15 +275,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
 
-                <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
-                    <div class="logo-icon">
-                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2L3 7l9 5 9-5-9-5z" fill="white" opacity="0.92"/>
-                            <path d="M3 12l9 5 9-5" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M3 17l9 5 9-5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.65"/>
-                        </svg>
-                    </div>
-                    <span style="font-family:'Lato',sans-serif; font-weight:900; font-size:17px; letter-spacing:-0.2px; color:#111;">SINTEM</span>
+                <a href="/" class="flex items-center flex-shrink-0">
+                    <img src="{{ asset('assets/Logo SINTEM.png') }}" alt="SINTEM" class="h-9 w-auto">
                 </a>
 
                 <nav class="hidden md:flex items-center gap-7">
@@ -298,15 +324,12 @@
                 <a href="#" class="block px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Laporkan</a>
                 <a href="#" class="block px-3 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Lost &amp; Found</a>
                 <div class="pt-3 pb-1 flex gap-2">
-                    <a href="{{ url('/login') }}" class="flex-1 btn-outline text-sm font-bold px-4 py-2.5 rounded-xl text-gray-700 text-center">Masuk</a>
-                    <a href="{{ url('/register') }}" class="flex-1 btn-sintem text-sm font-bold px-4 py-2.5 rounded-xl text-white text-center">Daftar</a>
                 </div>
             </div>
         </div>
     </header>
 
-
-    {{-- HERO --}}
+    /HERO/
     <section class="hero-bg flex flex-col items-center justify-center pt-16 px-4 sm:px-6">
         <div class="dots-pattern"></div>
         <div class="orb orb-1"></div>
@@ -320,33 +343,62 @@
                 <span class="text-xs font-bold text-purple-700 tracking-wide">Sistem Informasi Terintegrasi</span>
             </div>
 
-            {{-- Space Grotesk ONLY on this h1 --}}
             <h1 class="headline font-extrabold leading-[1.08] tracking-tight mb-6
                         text-[44px] sm:text-[60px] lg:text-[72px]">
                 <span class="hero-title-line-1 text-gray-900">Semua Informasi,</span>
                 <span class="hero-title-line-2">Dalam <span class="text-sintem">Satu Tempat</span></span>
             </h1>
 
-            <p class="hero-sub text-gray-500 leading-relaxed mb-10 text-[15px] sm:text-[17px]">
-                <span class="text-gray-700">Pengumuman real-time</span>
-                <span class="mx-2 text-purple-400">•</span>
-                <span class="text-gray-700">Laporan aduan cepat</span>
-                <span class="mx-2 text-purple-400">•</span>
-                <span class="text-gray-700">Data sekolah terintegrasi</span>
+            <p class="hero-sub text-black-500 leading-relaxed mb-10 text-[15px] sm:text-[17px]">
+                <span class="text-black-700">Pengumuman real-time</span>
+                <span class="mx-2 text-black-400">•</span>
+                <span class="text-black-700">Laporan aduan cepat</span>
+                <span class="mx-2 text-black-400">•</span>
+                <span class="text-black-700">Data sekolah terintegrasi</span>
             </p>
 
-            <div class="hero-cta flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-md mx-auto mb-9">
+            <div class="hero-cta flex items-stretch max-w-md mx-auto mb-9 border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <input
                     type="text"
-                    placeholder="Masukkan ID"
-                    class="sintem-input flex-1 px-5 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 shadow-sm transition-all duration-200"
+                    placeholder="Masuk Dengan NIS"
+                    class="sintem-input flex-1 px-5 py-3.5 bg-transparent text-sm text-gray-800 placeholder-gray-400 border-0 focus:ring-0"
+                    style="outline:none; box-shadow:none;"
                 />
-                <button class="btn-sintem px-6 py-3.5 rounded-2xl text-sm font-bold text-white shadow-lg whitespace-nowrap">
+                <button class="btn-sintem px-6 py-3.5 text-sm font-bold text-white whitespace-nowrap flex-shrink-0" style="border-radius:0;">
                     Masuk ke SINTEM
                 </button>
             </div>
         </div>
     </section>
+
+    {{-- FOOTER --}}
+    <footer class="w-full mt-auto">
+        <div class="footer-divider"></div>
+        <div class="max-w-7xl mx-auto px-6 py-10">
+            <div class="footer-fade-in flex flex-col sm:flex-row items-center justify-between gap-5">
+
+                <div class="flex items-center gap-2.5">
+                    <img src="{{ asset('assets/Logo SINTEM.png') }}" alt="SINTEM" class="h-7 w-auto">
+                    <span class="text-gray-300 text-sm">—</span>
+                    <span class="text-gray-400 text-xs">Sistem Informasi Terpadu Stemba</span>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} SINTEM Portal. All rights reserved.</p>
+                    <p class="text-xs text-gray-400 mt-1 flex items-center justify-center gap-1.5">
+                        Built with by <span class="text-sintem font-bold">13 SIJA 1</span>
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-5">
+                    <a href="#" class="footer-link">Kebijakan Privasi</a>
+                    <a href="#" class="footer-link">Kontak</a>
+                    <a href="#" class="footer-link">Bantuan</a>
+                </div>
+
+            </div>
+        </div>
+    </footer>
 
 
     <script>
@@ -360,6 +412,12 @@
             iconOpen.classList.toggle('hidden', isOpen);
             iconClose.classList.toggle('hidden', !isOpen);
         });
+
+        // Footer scroll-in
+        const footerObserver = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.2 });
+        document.querySelectorAll('.footer-fade-in').forEach(el => footerObserver.observe(el));
     </script>
 
 </body>
