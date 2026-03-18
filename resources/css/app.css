@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@source "../views";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+
+/* Theme Customization  (orca color or pattern Japanese wave) */
+@theme {
+    --color-stemba-blue: #004aad;
+}
