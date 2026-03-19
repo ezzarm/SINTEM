@@ -118,10 +118,10 @@
 
     {{-- ── USER PROFILE ── --}}
     <a href="{{ route('profile.show') }}" class="sb-user">
-        <img src="{{ Auth::user()->avatar ?? asset('assets/default-avatar.png') }}"
-             alt="Avatar"
-             class="sb-avatar"
-             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(session('user')['name'] ?? 'User') }}&background=6d28d9&color=fff&size=64'">
+        <div class="sb-avatar-initial">
+        {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+        {{ strtoupper(substr(strrchr(Auth::user()->name ?? '', ' '), 1, 1)) }}
+        </div>
         <div class="sb-user-info">
         <span class="sb-user-name">{{ Auth::user()->name ?? 'Nickname' }}</span>
         <span class="sb-user-id">{{ Auth::user()->identifier ?? 'user id' }}</span>
@@ -318,6 +318,22 @@
         margin-top: auto;
         transition: background 0.15s, border-color 0.15s;
     }
+
+    .sb-avatar-initial {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #9025FB, #4617D3);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: -0.5px;
+    }
+
     .sb-user:hover {
         background: #f4f0ff;
         border-color: #c4b5fd;
