@@ -198,7 +198,7 @@
             </p>
 
             <div class="animate-btn">
-                <a href="{{ route('login') }}" class="btn-sintem inline-flex items-center justify-center px-10 py-4 rounded-md text-white font-bold text-lg shadow-xl shadow-purple-500/20 group">
+                <a href="{{ route('login') }}" class="btn-sintem inline-flex items-center justify-center px-10 py-4 rounded text-white font-bold text-lg shadow-xl shadow-purple-500/20 group">
                     Masuk ke SINTEM
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                     </svg>
