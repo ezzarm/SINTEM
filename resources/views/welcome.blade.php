@@ -151,10 +151,10 @@
                     <img src="{{ asset('assets/Logo SINTEM.png') }}" alt="SINTEM" class="h-9 w-auto">
                 </a>
                 <nav class="hidden md:flex items-center gap-7">
-                    <a href="#" class="nav-link">Pengumuman</a>
-                    <a href="#" class="nav-link">Kalender Event</a>
-                    <a href="#" class="nav-link">Laporkan</a>
-                    <a href="#" class="nav-link">Lost & Found</a>
+                    <a href="{{ Auth::check() ? route('pengumuman.index') : route('login') }}" class="nav-link">Pengumuman</a>
+                    <a href="{{ Auth::check() ? route('kalender.index') : route('login') }}" class="nav-link">Kalender Event</a>
+                    <a href="{{ Auth::check() ? route('laporan.buat') : route('login') }}" class="nav-link">Laporkan</a>
+                    <a href="{{ Auth::check() ? route('temuan.index') : route('login') }}" class="nav-link">Lost & Found</a>
                 </nav>
                 <button id="menu-toggle" class="md:hidden p-2 rounded-lg hover:bg-purple-50 transition-colors">
                     <svg id="icon-open" class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,11 +169,12 @@
 
         <div id="mobile-menu" class="md:hidden bg-white/95 backdrop-blur-md">
             <div class="px-4 py-4 space-y-1">
-                <a href="#" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Pengumuman</a>
-                <a href="#" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Kalender Event</a>
-                <a href="#" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Laporkan</a>
-                <a href="#" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Lost & Found</a>
+                <a href="{{ Auth::check() ? route('pengumuman.index') : route('login') }}" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Pengumuman</a>
+                <a href="{{ Auth::check() ? route('kalender.index') : route('login') }}" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Kalender Event</a>
+                <a href="{{ Auth::check() ? route('laporan.buat') : route('login') }}" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Laporkan</a>
+                <a href="{{ Auth::check() ? route('temuan.index') : route('login') }}" class="block px-3 py-3 rounded-lg text-base text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">Lost & Found</a>
             </div>
+        </div>
         </div>
     </header>
 
@@ -220,7 +221,7 @@
                 <div class="text-center">
                     <p class="text-gray-400 text-sm">&copy; {{ date('Y') }} SINTEM Portal. All rights reserved.</p>
                     <p class="text-xs text-gray-400 mt-1 flex items-center justify-center gap-1.5">
-                        Built with by <span class="text-sintem font-bold">13 SIJA 1</span>
+                        Build by <span class="text-sintem font-bold">13 SIJA 1</span>
                     </p>
                 </div>
                 <div class="flex items-center gap-5">
