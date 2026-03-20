@@ -3,29 +3,497 @@
 
 @section('title', 'Pengumuman – SINTEM')
 
-@section('header', 'Pengumuman')
-@section('subheader', 'Pengumuman terbaru, laporan aduan, dan unggahan penemuan')
-
 @section('topbar')
-<div style="display:flex; align-items:center; justify-content:space-between; padding: 16px 32px; border-bottom: 1px solid #f0f0f5; background:#ffffff;">
-    <p style="font: size 20px;; font-weight:700; color:#1a1a2e;">
-        Selamat datang, {{ Auth::user()->name ?? 'Pengguna' }}! 
+<div style="display:flex; align-items:center; justify-content:space-between; padding: 14px 32px; border-bottom: 1px solid #f0f0f5; background:#ffffff;">
+    <p style="font-size:13.5px; font-weight:700; color:#1a1a2e;">
+        Selamat datang, {{ Auth::user()->name ?? 'Pengguna' }}! 👋
     </p>
-    <a href="{{ route('laporan.buat') }}"
-       style="display:inline-flex; align-items:center; gap:7px; padding: 9px 18px; background: linear-gradient(135deg, #9025FB, #4617D3); color:#fff; font-size:13px; font-weight:700; border-radius:8px; text-decoration:none; transition: opacity 0.18s, transform 0.18s; box-shadow: 0 4px 14px rgba(109,40,217,0.25);"
-       onmouseover="this.style.opacity='0.88';this.style.transform='translateY(-1px)'"
-       onmouseout="this.style.opacity='1';this.style.transform='translateY(0)'">
-        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
-                  d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
-                  d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    <a href="{{ route('laporan.buat') }}" class="btn-laporkan">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
         Laporkan
     </a>
 </div>
 @endsection
 
+@section('header', 'Pengumuman')
+@section('subheader', 'Pengumuman terbaru, laporan aduan, dan unggahan penemuan')
+
+@push('styles')
+<style>
+    /* ── Override layout defaults ── */
+    body { background: #ffffff !important; }
+    .page-body {
+        padding: 0 !important;
+        background: #ffffff !important;
+        overflow: visible !important;
+    }
+    .main-content { background: #ffffff !important; }
+    .page-header  { padding: 16px 32px 14px !important; background: #ffffff !important; }
+
+    /* ── Laporkan button ── */
+    .btn-laporkan {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #9025FB, #4617D3);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        font-family: 'Lato', sans-serif;
+        border-radius: 6px;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(109,40,217,0.2);
+        transition: opacity 0.15s, transform 0.15s;
+    }
+    .btn-laporkan:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Page content wrapper ── */
+    .pg-wrap {
+        padding: 20px 32px 40px;
+        background: #ffffff;
+        min-height: 100%;
+    }
+
+    /* ── Toolbar ── */
+    .pg-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .pg-toolbar-left { display: flex; align-items: center; gap: 6px; }
+
+    /* Dropdown */
+    .pg-dd {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+    .pg-dd-icon {
+        position: absolute;
+        left: 8px;
+        pointer-events: none;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+    }
+    .pg-dd select {
+        appearance: none;
+        padding: 6px 26px 6px 26px;
+        border: 1px solid #e5e7eb;
+        border-radius: 5px;
+        font-size: 12.5px;
+        font-family: 'Lato', sans-serif;
+        font-weight: 600;
+        color: #374151;
+        background: #fff;
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.12s, box-shadow 0.12s;
+        line-height: 1.4;
+    }
+    .pg-dd select:hover { border-color: #c4b5fd; }
+    .pg-dd select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.1); }
+    .pg-dd-arrow {
+        position: absolute;
+        right: 7px;
+        pointer-events: none;
+        color: #9ca3af;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Search */
+    .pg-search-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .pg-search-wrap .pg-si {
+        position: absolute;
+        left: 9px;
+        color: #b0b0c0;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+    }
+    .pg-search {
+        padding: 6px 12px 6px 30px;
+        border: 1px solid #e5e7eb;
+        border-radius: 5px;
+        font-size: 12.5px;
+        font-family: 'Lato', sans-serif;
+        color: #374151;
+        background: #fff;
+        width: 260px;
+        outline: none;
+        transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .pg-search::placeholder { color: #c4c4cc; }
+    .pg-search:focus {
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 2px rgba(124,58,237,0.1);
+    }
+
+    /* ── Two-column ── */
+    .pg-columns {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    /* Left feed */
+    .pg-main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Right sticky sidebar */
+    .pg-side {
+        width: 272px;
+        min-width: 272px;
+        position: sticky;
+        top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* ── Post card ── */
+    .pg-post {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        background: #fff;
+        border: 1px solid #ebebf0;
+        border-radius: 8px;
+        transition: border-color 0.15s;
+    }
+    .pg-post:hover { border-color: #d4d0f0; }
+
+    .pg-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #f4f4f8;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pg-post-body { flex: 1; min-width: 0; }
+
+    .pg-meta {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 5px;
+        flex-wrap: wrap;
+    }
+    .pg-author { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+    .pg-dot    { width: 3px; height: 3px; border-radius: 50%; background: #d1d5db; flex-shrink: 0; }
+    .pg-time   { font-size: 12px; color: #9ca3af; }
+
+    .pg-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-left: 2px;
+        letter-spacing: 0.02em;
+    }
+    .badge-announcement { background: #ede9fe; color: #5b21b6; }
+    .badge-event        { background: #dbeafe; color: #1d4ed8; }
+    .badge-lost_found   { background: #fef3c7; color: #92400e; }
+
+    .pg-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+    .pg-content {
+        font-size: 13px;
+        color: #4b5563;
+        line-height: 1.65;
+        white-space: pre-line;
+    }
+    .pg-image {
+        margin-top: 10px;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .pg-image img {
+        width: 100%;
+        display: block;
+        border-radius: 6px;
+        border: 1px solid #f0f0f5;
+    }
+
+    /* ── Sidebar widgets ── */
+    .pg-widget {
+        background: #fff;
+        border: 1px solid #ebebf0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .pg-widget-head {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f0f0f5;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .pg-widget-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #374151;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+    .pg-widget-count {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-left: 2px;
+    }
+    .pg-widget-list { padding: 4px 0; }
+
+    .pg-side-card {
+        display: flex;
+        gap: 9px;
+        padding: 8px 14px;
+        transition: background 0.12s;
+        cursor: default;
+    }
+    .pg-side-card:hover { background: #fafafa; }
+
+    .pg-side-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .icon-event { background: #dbeafe; }
+    .icon-lost  { background: #fef3c7; }
+
+    .pg-side-info { flex: 1; min-width: 0; }
+    .pg-side-name {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #1a1a2e;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.35;
+    }
+    .pg-side-meta { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+
+    .pg-side-empty {
+        padding: 14px;
+        font-size: 12px;
+        color: #c4c4cc;
+        text-align: center;
+    }
+
+    /* ── Empty state ── */
+    .pg-empty {
+        text-align: center;
+        padding: 48px 20px;
+        color: #9ca3af;
+        font-size: 13px;
+        background: #fff;
+        border: 1px solid #ebebf0;
+        border-radius: 8px;
+    }
+    .pg-empty svg { margin: 0 auto 10px; display: block; }
+</style>
+@endpush
+
 @section('content')
-    {{-- Content goes here --}}
+<div class="pg-wrap">
+
+    {{-- ── TOOLBAR ── --}}
+    <form method="GET" action="{{ route('pengumuman.index') }}" id="filterForm">
+        <div class="pg-toolbar">
+            <div class="pg-toolbar-left">
+                <div class="pg-dd">
+                    <span class="pg-dd-icon">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+                        </svg>
+                    </span>
+                    <select name="sort" onchange="document.getElementById('filterForm').submit()">
+                        <option value="terbaru" {{ $sort === 'terbaru' ? 'selected' : '' }}>Terbaru</option>
+                        <option value="terlama" {{ $sort === 'terlama' ? 'selected' : '' }}>Terlama</option>
+                    </select>
+                    <span class="pg-dd-arrow">
+                        <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </span>
+                </div>
+            </div>
+
+            <div class="pg-search-wrap">
+                <span class="pg-si">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" stroke-width="2"/>
+                        <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <input type="text" name="search" class="pg-search"
+                    placeholder="Telurusi pengumuman, laporan, atau aduan..."
+                    value="{{ $search }}"
+                    oninput="debounceSearch(this.form)">
+            </div>
+        </div>
+    </form>
+
+    {{-- ── TWO-COLUMN ── --}}
+    <div class="pg-columns">
+
+        {{-- LEFT: announcements feed --}}
+        <div class="pg-main">
+            @forelse($items->where('type', 'announcement') as $item)
+            <div class="pg-post">
+                <div class="pg-avatar">
+                    <svg width="16" height="16" fill="none" stroke="#c4c4d4" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/>
+                        <circle cx="12" cy="7" r="4" stroke-width="1.8"/>
+                    </svg>
+                </div>
+                <div class="pg-post-body">
+                    <div class="pg-meta">
+                        <span class="pg-author">{{ $item->author }}</span>
+                        <span class="pg-dot"></span>
+                        <span class="pg-time">{{ \Carbon\Carbon::parse($item->created_at)->diffForHumans() }}</span>
+                        <span class="pg-badge badge-announcement">Pengumuman</span>
+                    </div>
+                    @if($item->title)
+                    <div class="pg-title">{{ $item->title }}</div>
+                    @endif
+                    <div class="pg-content">{{ $item->content }}</div>
+
+                    @php $files = $attachmentMap['announcement_' . $item->id] ?? collect(); @endphp
+                    @foreach($files as $file)
+                        @if(str_starts_with($file->file_type, 'image'))
+                        <div class="pg-image">
+                            <img src="{{ asset('storage/' . $file->file_path) }}" alt="{{ $file->file_name }}" onerror="this.parentElement.style.display='none'">
+                        </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+            @empty
+            <div class="pg-empty">
+                <svg width="36" height="36" fill="none" stroke="#d1d5db" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Belum ada pengumuman.
+            </div>
+            @endforelse
+        </div>
+
+        {{-- RIGHT: sticky sidebar --}}
+        <aside class="pg-side">
+
+            {{-- Events --}}
+            <div class="pg-widget">
+                <div class="pg-widget-head">
+                    <svg width="13" height="13" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2" stroke-width="1.8"/>
+                        <line x1="16" y1="2" x2="16" y2="6" stroke-width="1.8" stroke-linecap="round"/>
+                        <line x1="8"  y1="2" x2="8"  y2="6" stroke-width="1.8" stroke-linecap="round"/>
+                        <line x1="3"  y1="10" x2="21" y2="10" stroke-width="1.8"/>
+                    </svg>
+                    <span class="pg-widget-title">Event</span>
+                    <span class="pg-widget-count" style="background:#dbeafe; color:#1d4ed8;">
+                        {{ $items->where('type', 'event')->count() }}
+                    </span>
+                </div>
+                <div class="pg-widget-list">
+                    @forelse($items->where('type', 'event')->take(5) as $item)
+                    <div class="pg-side-card">
+                        <div class="pg-side-icon icon-event">
+                            <svg width="13" height="13" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke-width="1.8"/>
+                                <line x1="16" y1="2" x2="16" y2="6" stroke-width="1.8" stroke-linecap="round"/>
+                                <line x1="8"  y1="2" x2="8"  y2="6" stroke-width="1.8" stroke-linecap="round"/>
+                                <line x1="3"  y1="10" x2="21" y2="10" stroke-width="1.8"/>
+                            </svg>
+                        </div>
+                        <div class="pg-side-info">
+                            <div class="pg-side-name">{{ $item->title }}</div>
+                            <div class="pg-side-meta">{{ \Carbon\Carbon::parse($item->created_at)->format('d M Y') }}</div>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="pg-side-empty">Tidak ada event.</div>
+                    @endforelse
+                </div>
+            </div>
+
+            {{-- Lost & Found --}}
+            <div class="pg-widget">
+                <div class="pg-widget-head">
+                    <svg width="13" height="13" fill="none" stroke="#92400e" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke-width="1.8"/>
+                        <line x1="12" y1="8"  x2="12" y2="12" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <span class="pg-widget-title">Lost & Found</span>
+                    <span class="pg-widget-count" style="background:#fef3c7; color:#92400e;">
+                        {{ $items->where('type', 'lost_found')->count() }}
+                    </span>
+                </div>
+                <div class="pg-widget-list">
+                    @forelse($items->where('type', 'lost_found')->take(5) as $item)
+                    <div class="pg-side-card">
+                        <div class="pg-side-icon icon-lost">
+                            <svg width="13" height="13" fill="none" stroke="#92400e" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke-width="1.8"/>
+                                <line x1="12" y1="8"  x2="12" y2="12" stroke-width="2" stroke-linecap="round"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="pg-side-info">
+                            <div class="pg-side-name">{{ $item->title }}</div>
+                            <div class="pg-side-meta">{{ \Carbon\Carbon::parse($item->created_at)->diffForHumans() }}</div>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="pg-side-empty">Tidak ada laporan temuan.</div>
+                    @endforelse
+                </div>
+            </div>
+
+        </aside>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    let searchTimer;
+    function debounceSearch(form) {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => form.submit(), 500);
+    }
+</script>
+@endpush

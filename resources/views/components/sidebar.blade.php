@@ -116,6 +116,11 @@
 
     </nav>
 
+    {{-- Search empty state --}}
+    <div id="sb-no-result" style="display:none; padding: 8px 10px; font-size:12px; color:#9ca3af; text-align:center;">
+        Tidak ditemukan
+    </div>
+
     {{-- ── USER PROFILE ── --}}
     <a href="{{ route('profile.show') }}" class="sb-user">
         <div class="sb-avatar-initial">
@@ -378,6 +383,75 @@
             if (drop.querySelector('.sb-sub-item.active')) {
                 drop.classList.add('open');
             }
+        });
+
+        const searchInput = document.querySelector('.sb-search');
+        const noResult    = document.getElementById('sb-no-result');
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim().toLowerCase();
+
+            const mainItems = document.querySelectorAll('.sb-nav .sb-item:not(.sb-dropdown-trigger)');
+            const dropdowns = document.querySelectorAll('.sb-dropdown');
+            const subItems  = document.querySelectorAll('.sb-sub-item');
+            const labels    = document.querySelectorAll('.sb-group-label');
+            const divider   = document.querySelector('.sb-divider');
+
+            let anyVisible = false;
+
+            if (query === '') {
+                mainItems.forEach(el => el.style.display = '');
+                dropdowns.forEach(el => {
+                    el.style.display = '';
+                    if (!el.querySelector('.sb-sub-item.active')) {
+                        el.classList.remove('open');
+                    }
+                });
+                subItems.forEach(el => el.style.display = '');
+                labels.forEach(el => el.style.display = '');
+                if (divider) divider.style.display = '';
+                noResult.style.display = 'none';
+                return;
+            }
+
+            labels.forEach(el => el.style.display = 'none');
+            if (divider) divider.style.display = 'none';
+
+            mainItems.forEach(el => {
+                const text = el.querySelector('span') ? el.querySelector('span').textContent.toLowerCase() : '';
+                const match = text.includes(query);
+                el.style.display = match ? '' : 'none';
+                if (match) anyVisible = true;
+            });
+
+            dropdowns.forEach(drop => {
+                const triggerText = drop.querySelector('.sb-dropdown-trigger span')
+                    ? drop.querySelector('.sb-dropdown-trigger span').textContent.toLowerCase()
+                    : '';
+                const triggerMatch = triggerText.includes(query);
+
+                let anySubMatch = false;
+                drop.querySelectorAll('.sb-sub-item').forEach(sub => {
+                    const subText = sub.textContent.trim().toLowerCase();
+                    const subMatch = subText.includes(query);
+                    sub.style.display = subMatch ? '' : 'none';
+                    if (subMatch) anySubMatch = true;
+                });
+
+                if (triggerMatch || anySubMatch) {
+                    drop.style.display = '';
+                    drop.classList.add('open'); // open dropdown so sub-items are visible
+                    anyVisible = true;
+                    // If only trigger matched, show all sub-items
+                    if (triggerMatch && !anySubMatch) {
+                        drop.querySelectorAll('.sb-sub-item').forEach(sub => sub.style.display = '');
+                    }
+                } else {
+                    drop.style.display = 'none';
+                }
+            });
+
+            noResult.style.display = anyVisible ? 'none' : '';
         });
     });
 
