@@ -14,29 +14,41 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html, body {
+            height: 100%;
+            overflow: hidden; /* prevent body scroll — pages handle their own */
+        }
+
         body {
             font-family: 'Lato', sans-serif;
             background: #ffffff;
-            min-height: 100vh;
             display: flex;
         }
 
         .layout-wrap {
             display: flex;
             width: 100%;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
+        /* ── Main area: fixed height, no scroll ── */
         .main-content {
             flex: 1;
+            min-width: 0;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            min-width: 0;
-            min-height: 100vh;
             background: #ffffff;
         }
 
+        /* ── Fixed top sections (topbar + page header) ── */
+        .page-topbar {
+            flex-shrink: 0;
+        }
         .page-header {
+            flex-shrink: 0;
             padding: 16px 32px 14px;
             border-bottom: 1px solid #f0f0f5;
             background: #ffffff;
@@ -53,11 +65,14 @@
             margin-top: 2px;
         }
 
+        /* ── Page body: fills remaining height, default scrollable ── */
         .page-body {
             flex: 1;
+            min-height: 0;       /* critical — allows flex child to shrink below content size */
             padding: 28px 32px;
             background: #ffffff;
             overflow-y: auto;
+            width: 100%;
         }
     </style>
 
@@ -72,7 +87,11 @@
     <div class="main-content">
 
         {{-- Topbar (optional per page) --}}
-        @yield('topbar')
+        @hasSection('topbar')
+        <div class="page-topbar">
+            @yield('topbar')
+        </div>
+        @endif
 
         {{-- Page header --}}
         @hasSection('header')

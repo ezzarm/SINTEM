@@ -23,12 +23,12 @@
 
 @push('styles')
 <style>
-    /* ── Override layout defaults ── */
-    body { background: #ffffff !important; }
+    /* ── Layout overrides ── */
     .page-body {
         padding: 0 !important;
-        background: #ffffff !important;
-        overflow: visible !important;
+        overflow: hidden !important;
+        display: flex;
+        flex-direction: column;
     }
     .main-content { background: #ffffff !important; }
     .page-header  { padding: 16px 32px 14px !important; background: #ffffff !important; }
@@ -51,41 +51,41 @@
     }
     .btn-laporkan:hover { opacity: 0.88; transform: translateY(-1px); }
 
-    /* ── Page content wrapper ── */
+    /* ── Outer wrapper ── */
     .pg-wrap {
-        padding: 20px 32px 40px;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
         background: #ffffff;
-        min-height: 100%;
+        overflow: hidden;
     }
 
-    /* ── Toolbar ── */
+    /* ── Toolbar: locked ── */
+    .pg-toolbar-wrap {
+        flex-shrink: 0;
+        padding: 14px 32px 12px;
+        border-bottom: 1px solid #f0f0f5;
+        background: #ffffff;
+    }
     .pg-toolbar {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 8px;
-        padding-bottom: 16px;
-        flex-wrap: wrap;
     }
     .pg-toolbar-left { display: flex; align-items: center; gap: 6px; }
 
-    /* Dropdown */
-    .pg-dd {
+    /* ── Custom dropdown ── */
+    .pg-dd-custom {
         position: relative;
+        display: inline-block;
+    }
+    .pg-dd-trigger {
         display: inline-flex;
         align-items: center;
-    }
-    .pg-dd-icon {
-        position: absolute;
-        left: 8px;
-        pointer-events: none;
-        color: #6b7280;
-        display: flex;
-        align-items: center;
-    }
-    .pg-dd select {
-        appearance: none;
-        padding: 6px 26px 6px 26px;
+        gap: 6px;
+        padding: 6px 10px;
         border: 1px solid #e5e7eb;
         border-radius: 5px;
         font-size: 12.5px;
@@ -96,20 +96,61 @@
         cursor: pointer;
         outline: none;
         transition: border-color 0.12s, box-shadow 0.12s;
-        line-height: 1.4;
+        white-space: nowrap;
     }
-    .pg-dd select:hover { border-color: #c4b5fd; }
-    .pg-dd select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.1); }
-    .pg-dd-arrow {
+    .pg-dd-trigger:hover { border-color: #c4b5fd; }
+    .pg-dd-custom.open .pg-dd-trigger {
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 2px rgba(124,58,237,0.1);
+    }
+    .pg-dd-chevron { transition: transform 0.2s ease; }
+    .pg-dd-custom.open .pg-dd-chevron { transform: rotate(180deg); }
+
+    .pg-dd-menu {
+        display: none;
         position: absolute;
-        right: 7px;
-        pointer-events: none;
-        color: #9ca3af;
+        top: calc(100% + 4px);
+        left: 0;
+        min-width: 130px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        z-index: 100;
+        overflow: hidden;
+        padding: 4px;
+    }
+    .pg-dd-custom.open .pg-dd-menu {
+        display: block;
+        animation: ddFadeIn 0.15s ease;
+    }
+    @keyframes ddFadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .pg-dd-option {
         display: flex;
         align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 7px 10px;
+        font-size: 13px;
+        font-family: 'Lato', sans-serif;
+        font-weight: 500;
+        color: #374151;
+        background: none;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: left;
+        transition: background 0.1s, color 0.1s;
     }
+    .pg-dd-option svg { opacity: 0; flex-shrink: 0; stroke: #7c3aed; }
+    .pg-dd-option:hover { background: #f4f0ff; color: #4f28d9; }
+    .pg-dd-option.selected { color: #4f28d9; font-weight: 700; }
+    .pg-dd-option.selected svg { opacity: 1; }
 
-    /* Search */
+    /* ── Search ── */
     .pg-search-wrap {
         position: relative;
         display: flex;
@@ -141,28 +182,37 @@
         box-shadow: 0 0 0 2px rgba(124,58,237,0.1);
     }
 
-    /* ── Two-column ── */
+    /* ── Columns ── */
     .pg-columns {
+        flex: 1;
+        min-height: 0;
         display: flex;
-        gap: 16px;
-        align-items: flex-start;
+        gap: 0;
+        overflow: hidden;
     }
 
-    /* Left feed */
+    /* LEFT: only this scrolls, no scrollbar */
     .pg-main {
         flex: 1;
         min-width: 0;
+        overflow-y: auto;
+        padding: 16px 24px 32px 32px;
         display: flex;
         flex-direction: column;
         gap: 8px;
+        /* Hide scrollbar */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
+    .pg-main::-webkit-scrollbar { display: none; }
 
-    /* Right sticky sidebar */
+    /* RIGHT: locked */
     .pg-side {
         width: 272px;
         min-width: 272px;
-        position: sticky;
-        top: 20px;
+        flex-shrink: 0;
+        overflow: hidden;
+        padding: 16px 32px 16px 0;
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -177,6 +227,7 @@
         border: 1px solid #ebebf0;
         border-radius: 8px;
         transition: border-color 0.15s;
+        flex-shrink: 0;
     }
     .pg-post:hover { border-color: #d4d0f0; }
 
@@ -247,6 +298,7 @@
         border: 1px solid #ebebf0;
         border-radius: 8px;
         overflow: hidden;
+        flex-shrink: 0;
     }
     .pg-widget-head {
         padding: 10px 14px;
@@ -276,7 +328,6 @@
         gap: 9px;
         padding: 8px 14px;
         transition: background 0.12s;
-        cursor: default;
     }
     .pg-side-card:hover { background: #fafafa; }
 
@@ -328,47 +379,71 @@
 @section('content')
 <div class="pg-wrap">
 
-    {{-- ── TOOLBAR ── --}}
+    {{-- ── TOOLBAR (locked) ── --}}
     <form method="GET" action="{{ route('pengumuman.index') }}" id="filterForm">
-        <div class="pg-toolbar">
-            <div class="pg-toolbar-left">
-                <div class="pg-dd">
-                    <span class="pg-dd-icon">
-                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
-                        </svg>
-                    </span>
-                    <select name="sort" onchange="document.getElementById('filterForm').submit()">
-                        <option value="terbaru" {{ $sort === 'terbaru' ? 'selected' : '' }}>Terbaru</option>
-                        <option value="terlama" {{ $sort === 'terlama' ? 'selected' : '' }}>Terlama</option>
-                    </select>
-                    <span class="pg-dd-arrow">
-                        <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </span>
-                </div>
-            </div>
+        <div class="pg-toolbar-wrap">
+            <div class="pg-toolbar">
 
-            <div class="pg-search-wrap">
-                <span class="pg-si">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8" stroke-width="2"/>
-                        <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <input type="text" name="search" class="pg-search"
-                    placeholder="Telurusi pengumuman, laporan, atau aduan..."
-                    value="{{ $search }}"
-                    oninput="debounceSearch(this.form)">
+                <div class="pg-toolbar-left">
+
+                    {{-- Custom sort dropdown --}}
+                    <div class="pg-dd-custom" id="sortDropdown">
+                        <button type="button" class="pg-dd-trigger" onclick="toggleSortDD()">
+                            <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+                            </svg>
+                            <span id="sortLabel">{{ $sort === 'terlama' ? 'Terlama' : 'Terbaru' }}</span>
+                            <svg class="pg-dd-chevron" width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div class="pg-dd-menu" id="sortMenu">
+                            <button type="button"
+                                    class="pg-dd-option {{ $sort === 'terbaru' ? 'selected' : '' }}"
+                                    onclick="selectSort('terbaru', 'Terbaru')">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Terbaru
+                            </button>
+                            <button type="button"
+                                    class="pg-dd-option {{ $sort === 'terlama' ? 'selected' : '' }}"
+                                    onclick="selectSort('terlama', 'Terlama')">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Terlama
+                            </button>
+                        </div>
+
+                        <input type="hidden" name="sort" id="sortInput" value="{{ $sort }}">
+                    </div>
+
+                </div>
+
+                {{-- Search --}}
+                <div class="pg-search-wrap">
+                    <span class="pg-si">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" stroke-width="2"/>
+                            <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <input type="text" name="search" class="pg-search"
+                        placeholder="Telurusi pengumuman, laporan, atau aduan..."
+                        value="{{ $search }}"
+                        oninput="debounceSearch(this.form)">
+                </div>
+
             </div>
         </div>
     </form>
 
-    {{-- ── TWO-COLUMN ── --}}
+    {{-- ── COLUMNS ── --}}
     <div class="pg-columns">
 
-        {{-- LEFT: announcements feed --}}
+        {{-- LEFT: only this scrolls ── --}}
         <div class="pg-main">
             @forelse($items->where('type', 'announcement') as $item)
             <div class="pg-post">
@@ -394,7 +469,9 @@
                     @foreach($files as $file)
                         @if(str_starts_with($file->file_type, 'image'))
                         <div class="pg-image">
-                            <img src="{{ asset('storage/' . $file->file_path) }}" alt="{{ $file->file_name }}" onerror="this.parentElement.style.display='none'">
+                            <img src="{{ asset('storage/' . $file->file_path) }}"
+                                 alt="{{ $file->file_name }}"
+                                 onerror="this.parentElement.style.display='none'">
                         </div>
                         @endif
                     @endforeach
@@ -410,7 +487,7 @@
             @endforelse
         </div>
 
-        {{-- RIGHT: sticky sidebar --}}
+        {{-- RIGHT: locked ── --}}
         <aside class="pg-side">
 
             {{-- Events --}}
@@ -490,10 +567,35 @@
 
 @push('scripts')
 <script>
+    // ── Debounced search ──
     let searchTimer;
     function debounceSearch(form) {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => form.submit(), 500);
     }
+
+    // ── Custom sort dropdown ──
+    function toggleSortDD() {
+        document.getElementById('sortDropdown').classList.toggle('open');
+    }
+
+    function selectSort(value, label) {
+        document.getElementById('sortInput').value = value;
+        document.getElementById('sortLabel').textContent = label;
+
+        // Update selected state visually
+        document.querySelectorAll('.pg-dd-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.textContent.trim() === label);
+        });
+
+        document.getElementById('sortDropdown').classList.remove('open');
+        document.getElementById('filterForm').submit();
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', e => {
+        const dd = document.getElementById('sortDropdown');
+        if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+    });
 </script>
 @endpush
