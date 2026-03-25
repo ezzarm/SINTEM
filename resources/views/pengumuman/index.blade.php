@@ -6,7 +6,7 @@
 @section('topbar')
 <div style="display:flex; align-items:center; justify-content:space-between; padding: 14px 32px; border-bottom: 1px solid #f0f0f5; background:#ffffff;">
     <p style="font-size:13.5px; font-weight:700; color:#1a1a2e;">
-        Selamat datang, {{ Auth::user()->name ?? 'Pengguna' }}! 👋
+        Selamat datang, {{ Auth::user()->name ?? 'Pengguna' }}! 
     </p>
     <a href="{{ route('laporan.buat') }}" class="btn-laporkan">
         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -506,7 +506,7 @@
                 </div>
                 <div class="pg-widget-list">
                     @forelse($items->where('type', 'event')->take(5) as $item)
-                    <div class="pg-side-card">
+                    <a href="{{ route('kalender.index', ['open' => $item->id]) }}" class="pg-side-card" style="text-decoration:none;">
                         <div class="pg-side-icon icon-event">
                             <svg width="13" height="13" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24">
                                 <rect x="3" y="4" width="18" height="18" rx="2" stroke-width="1.8"/>
@@ -517,9 +517,9 @@
                         </div>
                         <div class="pg-side-info">
                             <div class="pg-side-name">{{ $item->title }}</div>
-                            <div class="pg-side-meta">{{ \Carbon\Carbon::parse($item->created_at)->format('d M Y') }}</div>
+                            <div class="pg-side-meta">{{ \Carbon\Carbon::parse($item->created_at)->format('d M Y') }}{{ !empty($item->location_name) ? ' · ' . $item->location_name : '' }}</div>
                         </div>
-                    </div>
+                    </a>
                     @empty
                     <div class="pg-side-empty">Tidak ada event.</div>
                     @endforelse
@@ -551,8 +551,7 @@
                         </div>
                         <div class="pg-side-info">
                             <div class="pg-side-name">{{ $item->title }}</div>
-                            <div class="pg-side-meta">{{ \Carbon\Carbon::parse($item->created_at)->diffForHumans() }}</div>
-                        </div>
+                            <div class="pg-side-meta">{{ !empty($item->lost_type) ? ($item->lost_type === 'found' ? 'Ditemukan' : 'Hilang') . ' · ' : '' }}{{ \Carbon\Carbon::parse($item->created_at)->diffForHumans() }}{{ !empty($item->found_at) ? ' · ' . $item->found_at : '' }}</div>                        </div>
                     </div>
                     @empty
                     <div class="pg-side-empty">Tidak ada laporan temuan.</div>

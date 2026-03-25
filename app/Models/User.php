@@ -8,15 +8,16 @@ class User extends Authenticatable
 {
     protected $table = 'users';
 
-    // Tell Laravel this table has no created_at / updated_at columns
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'identifier',
         'name',
+        'email',
         'password',
         'role_id',
         'status',
+        'last_login',
     ];
 
     protected $hidden = [
