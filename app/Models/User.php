@@ -1,4 +1,5 @@
 <?php
+// app/Models/User.php
 
 namespace App\Models;
 
@@ -23,6 +24,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    protected $casts = [
+        'role_id' => 'integer',
+        'status'  => 'string',
     ];
 
     public function getAuthIdentifierName()

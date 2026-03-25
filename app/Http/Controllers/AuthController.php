@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/AuthController.php
 
 namespace App\Http\Controllers;
 
@@ -10,7 +11,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('pengumuman.index');
+            return $this->redirectByRole();
         }
         return view('auth.login');
     }
@@ -22,20 +23,29 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $credentials = [
+        if (Auth::attempt([
             'identifier' => $request->nis,
             'password'   => $request->password,
             'status'     => 'active',
-        ];
-
-        if (Auth::attempt($credentials)) {
+        ])) {
             $request->session()->regenerate();
-            return redirect()->intended(route('pengumuman.index'));
+            return $this->redirectByRole();
         }
 
         return back()
             ->withInput($request->only('nis'))
             ->with('error', 'NIS atau password salah. Silakan coba lagi.');
+    }
+
+    private function redirectByRole()
+    {
+        $roleId = (int) Auth::user()->role_id;
+
+        if ($roleId === 2) {
+            return redirect()->route('pengumuman.index');
+        }
+
+        return redirect()->route('admin.pengumuman.index');
     }
 
     public function logout(Request $request)

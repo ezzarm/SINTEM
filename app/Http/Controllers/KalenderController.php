@@ -13,8 +13,21 @@ class KalenderController extends Controller
         $view   = $request->get('view', 'card');
         $search = $request->get('search', '');
         $filter = $request->get('filter', 'semua');
-        $openId = $request->get('open', null); // auto-open popup for this event id
+        $month  = (int) $request->get('month', date('n'));
+        $year   = (int) $request->get('year',  date('Y'));
 
+        // ── If ?open=id is in the URL, store it in session and redirect
+        //    to the same URL without ?open= so refresh won't re-trigger ──
+        if ($request->has('open') && $request->get('open')) {
+            $request->session()->put('kalender_open_event', (int) $request->get('open'));
+
+            // Redirect to same URL minus the ?open= param
+            return redirect()->route('kalender.index', array_merge(
+                $request->except('open')
+            ));
+        }
+
+        // ── Events query ──
         $query = DB::table('events')
             ->join('users', 'events.created_by', '=', 'users.id')
             ->join('event_categories', 'events.category_id', '=', 'event_categories.id')
@@ -47,6 +60,7 @@ class KalenderController extends Controller
 
         $events = $query->orderBy('events.event_date', 'asc')->get();
 
+        // Attach photos
         foreach ($events as $event) {
             $event->photos = DB::table('photos')
                 ->where('source_type', 'event')
@@ -59,8 +73,7 @@ class KalenderController extends Controller
         // Calendar: map events by date
         $eventsByDate = [];
         foreach ($events as $event) {
-            $date = $event->event_date;
-            $eventsByDate[$date][] = $event;
+            $eventsByDate[$event->event_date][] = $event;
 
             if ($event->event_date_end && $event->event_date_end !== $event->event_date) {
                 $start    = new \DateTime($event->event_date);
@@ -69,22 +82,23 @@ class KalenderController extends Controller
                 $range    = new \DatePeriod($start, $interval, $end);
                 foreach ($range as $d) {
                     $key = $d->format('Y-m-d');
-                    if ($key !== $date) {
+                    if ($key !== $event->event_date) {
                         $eventsByDate[$key][] = $event;
                     }
                 }
-                // include end date too
-                $eventsByDate[$event->event_date_end][] = $event;
+                // include end date
+                if (!isset($eventsByDate[$event->event_date_end]) ||
+                    !in_array($event, $eventsByDate[$event->event_date_end])) {
+                    $eventsByDate[$event->event_date_end][] = $event;
+                }
             }
         }
 
-        $month = (int) $request->get('month', date('n'));
-        $year  = (int) $request->get('year',  date('Y'));
-
-        // If openId given, find that event data to auto-open popup
+        // ── Pull open event from session (fires only once) ──
         $openEvent = null;
+        $openId    = $request->session()->pull('kalender_open_event'); // pull = get + delete
         if ($openId) {
-            $openEvent = $events->firstWhere('id', (int) $openId);
+            $openEvent = $events->firstWhere('id', $openId);
         }
 
         return view('kalender.index', compact(
