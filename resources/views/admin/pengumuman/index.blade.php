@@ -431,15 +431,15 @@
                     <td>
                         {{-- Edit --}}
                         <button type="button" class="action-btn" title="Edit"
-                                onclick='openEditPanel(@json([
-                                    "id"           => $item->id,
-                                    "title"        => $item->title,
-                                    "content"      => $item->content,
-                                    "is_published" => $item->is_published,
-                                    "photo"        => optional($item->photos->first())->file_path
-                                               ? asset("storage/" . $item->photos->first()->file_path)
-                                               : null,
-                                ]))'>
+                                onclick="openEditPanel({{ json_encode([
+                                    'id' => $item->id,
+                                    'title' => $item->title,
+                                    'content' => $item->content,
+                                    'is_published' => $item->is_published,
+                                    'photo' => optional($item->photos->first())->file_path
+                                        ? asset('storage/' . $item->photos->first()->file_path)
+                                        : null,
+                                ]) }})"
                             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                                       d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/>
