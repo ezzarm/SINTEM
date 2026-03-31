@@ -5,7 +5,7 @@
 
 @section('topbar')
 <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid #f0f0f5;background:#fff;">
-    <p style="font-size:13.5px;font-weight:700;color:#1a1a2e;">Selamat Datang, {{ Auth::user()->name }}! 👋</p>
+    <p style="font-size:13.5px;font-weight:700;color:#1a1a2e;">Selamat Datang, {{ Auth::user()->name }}! </p>
     <button type="button" class="btn-publish" onclick="openAddModal()">
         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/>
@@ -373,7 +373,7 @@
                     </svg>
                 </span>
                 <input type="text" name="search" class="adm-search"
-                    placeholder="Telurusi pengumuman..."
+                    placeholder="Telusuri pengumuman..."
                     value="{{ $search }}"
                     oninput="debounce(this.form)">
             </div>

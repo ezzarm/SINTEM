@@ -2,6 +2,10 @@
 @extends('layouts.app')
 
 @section('title', 'Profil – SINTEM')
+@section('topbar')
+    @include('components.topbar')
+@endsection
+
 @section('header', 'Profil Saya')
 @section('subheader', 'Informasi akun dan pengaturan keamanan')
 

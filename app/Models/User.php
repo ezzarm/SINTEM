@@ -1,5 +1,4 @@
 <?php
-// app/Models/User.php
 
 namespace App\Models;
 
@@ -34,6 +33,11 @@ class User extends Authenticatable
     public function getAuthIdentifierName()
     {
         return 'identifier';
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->password;
     }
 
     public function role()

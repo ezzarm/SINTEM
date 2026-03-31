@@ -4,18 +4,7 @@
 @section('title', 'Pengumuman – SINTEM')
 
 @section('topbar')
-<div style="display:flex; align-items:center; justify-content:space-between; padding: 14px 32px; border-bottom: 1px solid #f0f0f5; background:#ffffff;">
-    <p style="font-size:13.5px; font-weight:700; color:#1a1a2e;">
-        Selamat datang, {{ Auth::user()->name ?? 'Pengguna' }}! 
-    </p>
-    <a href="{{ route('laporan.buat') }}" class="btn-laporkan">
-        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-        Laporkan
-    </a>
-</div>
+    @include('components.topbar')
 @endsection
 
 @section('header', 'Pengumuman')
@@ -32,24 +21,6 @@
     }
     .main-content { background: #ffffff !important; }
     .page-header  { padding: 16px 32px 14px !important; background: #ffffff !important; }
-
-    /* ── Laporkan button ── */
-    .btn-laporkan {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        background: linear-gradient(135deg, #9025FB, #4617D3);
-        color: #fff;
-        font-size: 13px;
-        font-weight: 700;
-        font-family: 'Lato', sans-serif;
-        border-radius: 6px;
-        text-decoration: none;
-        box-shadow: 0 2px 8px rgba(109,40,217,0.2);
-        transition: opacity 0.15s, transform 0.15s;
-    }
-    .btn-laporkan:hover { opacity: 0.88; transform: translateY(-1px); }
 
     /* ── Outer wrapper ── */
     .pg-wrap {
@@ -431,7 +402,7 @@
                         </svg>
                     </span>
                     <input type="text" name="search" class="pg-search"
-                        placeholder="Telurusi pengumuman, laporan, atau aduan..."
+                        placeholder="Telusuri pengumuman..."
                         value="{{ $search }}"
                         oninput="debounceSearch(this.form)">
                 </div>

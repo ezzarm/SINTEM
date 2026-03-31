@@ -4,16 +4,7 @@
 @section('title', 'Kalender Kegiatan – SINTEM')
 
 @section('topbar')
-<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid #f0f0f5;background:#fff;">
-    <p style="font-size:13.5px;font-weight:700;color:#1a1a2e;">Selamat Datang, {{ Auth::user()->name ?? 'Pengguna' }}!</p>
-    <a href="{{ route('laporan.buat') }}" class="btn-laporkan">
-        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-        Laporkan
-    </a>
-</div>
+    @include('components.topbar')
 @endsection
 
 @section('header', 'Kalender Kegiatan')
@@ -24,16 +15,6 @@
     .page-body { padding:0!important;overflow:hidden!important;display:flex;flex-direction:column; }
     .main-content { background:#fff!important; }
     .page-header  { padding:16px 32px 14px!important;background:#fff!important; }
-
-    .btn-laporkan {
-        display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
-        background:linear-gradient(135deg,#9025FB,#4617D3);color:#fff;
-        font-size:13px;font-weight:700;font-family:'Lato',sans-serif;
-        border-radius:6px;text-decoration:none;
-        box-shadow:0 2px 8px rgba(109,40,217,0.2);
-        transition:opacity 0.15s,transform 0.15s;
-    }
-    .btn-laporkan:hover { opacity:0.88;transform:translateY(-1px); }
 
     .kl-wrap { flex:1;min-height:0;display:flex;flex-direction:column;background:#fff;overflow:hidden; }
 
@@ -282,7 +263,7 @@
 
                 <div class="kl-search-wrap">
                     <span class="kl-si"><svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/></svg></span>
-                    <input type="text" name="search" class="kl-search" placeholder="Cari kegiatan..." value="{{ $search }}" oninput="debounceKl(this.form)">
+                    <input type="text" name="search" class="kl-search" placeholder="Telusuri kegiatan..." value="{{ $search }}" oninput="debounceKl(this.form)">
                 </div>
             </div>
 
