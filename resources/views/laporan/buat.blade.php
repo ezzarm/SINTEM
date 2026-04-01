@@ -97,6 +97,7 @@
     .editor-toolbar { display: flex; align-items: center; gap: 2px; padding: 7px 10px; background: #f9f9fc; border-bottom: 1px solid #f0f0f5; flex-wrap: wrap; }
     .toolbar-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: 4px; background: none; cursor: pointer; color: #6b7280; font-size: 13px; font-family: 'Lato', sans-serif; font-weight: 700; transition: background 0.1s, color 0.1s; }
     .toolbar-btn:hover { background: #ede9fe; color: #4f28d9; }
+    .toolbar-btn.active { background: #ede9fe; color: #4f28d9; }
     .tb-div { width: 1px; height: 18px; background: #e5e7eb; margin: 0 3px; flex-shrink: 0; }
     .editor-body { min-height: 180px; padding: 12px 14px; font-size: 13px; font-family: 'Lato', sans-serif; color: #374151; line-height: 1.65; outline: none; background: #fff; }
     .editor-body:empty::before { content: attr(data-placeholder); color: #c4c4cc; pointer-events: none; }
@@ -215,19 +216,19 @@
             <label class="form-label">Deskripsi</label>
             <div class="editor-wrap">
                 <div class="editor-toolbar">
-                    <button type="button" class="toolbar-btn" onclick="ec('bold')"><b>B</b></button>
-                    <button type="button" class="toolbar-btn" onclick="ec('italic')"><i>I</i></button>
-                    <button type="button" class="toolbar-btn" onclick="ec('underline')"><u>U</u></button>
+                    <button type="button" class="toolbar-btn" data-cmd="bold"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" data-cmd="italic"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" data-cmd="underline"><u>U</u></button>
                     <div class="tb-div"></div>
-                    <button type="button" class="toolbar-btn" onclick="ec('justifyLeft')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="15" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="18" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
-                    <button type="button" class="toolbar-btn" onclick="ec('justifyCenter')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="12" x2="18" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="4" y1="18" x2="20" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
-                    <button type="button" class="toolbar-btn" onclick="ec('justifyRight')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="12" x2="21" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="18" x2="21" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
-                    <button type="button" class="toolbar-btn" onclick="ec('insertOrderedList')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="12" x2="21" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="18" x2="21" y2="18" stroke-width="2" stroke-linecap="round"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h1v4M4 10h2"/></svg></button>
+                    <button type="button" class="toolbar-btn" data-cmd="justifyLeft"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="15" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="18" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
+                    <button type="button" class="toolbar-btn" data-cmd="justifyCenter"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="12" x2="18" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="4" y1="18" x2="20" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
+                    <button type="button" class="toolbar-btn" data-cmd="justifyRight"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="12" x2="21" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="18" x2="21" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
+                    <button type="button" class="toolbar-btn" data-cmd="insertOrderedList"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="12" x2="21" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="18" x2="21" y2="18" stroke-width="2" stroke-linecap="round"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h1v4M4 10h2"/></svg></button>
                     <div class="tb-div"></div>
                     <button type="button" class="toolbar-btn"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5" stroke-linecap="round"/></svg></button>
                 </div>
-                <div class="editor-body" id="an-editor" contenteditable="true"
-                     data-placeholder="Masukkan deskripsi laporan..." oninput="syncDesc()"></div>
+                <div class="editor-body" id="an-editor" contenteditable="true" data-target="an-hidden"
+                     data-placeholder="Masukkan deskripsi laporan..."></div>
             </div>
             <textarea name="report_content" id="an-hidden">{{ old('report_content') }}</textarea>
         </div>
@@ -260,6 +261,46 @@
 
 @push('scripts')
 <script>
+    // ── Rich text editor ──
+    document.querySelectorAll('.toolbar-btn[data-cmd]').forEach(btn => {
+        btn.addEventListener('mousedown', e => {
+            e.preventDefault(); // don't steal focus
+        });
+        btn.addEventListener('click', () => {
+            const cmd = btn.dataset.cmd;
+            const editor = btn.closest('.editor-wrap').querySelector('.editor-body');
+            editor.focus();
+            document.execCommand(cmd, false, null);
+            syncEditors();
+            updateToolbarStates();
+        });
+    });
+
+    function syncEditors() {
+        document.querySelectorAll('.editor-body').forEach(editor => {
+            const hidden = document.getElementById(editor.dataset.target);
+            if (hidden) hidden.value = editor.innerHTML;
+        });
+    }
+
+    function updateToolbarStates() {
+        ['bold','italic','underline'].forEach(cmd => {
+            document.querySelectorAll(`[data-cmd="${cmd}"]`).forEach(btn => {
+                btn.classList.toggle('active', document.queryCommandState(cmd));
+            });
+        });
+    }
+
+    document.querySelectorAll('.editor-body').forEach(editor => {
+        editor.addEventListener('keyup', updateToolbarStates);
+        editor.addEventListener('mouseup', updateToolbarStates);
+        editor.addEventListener('input', syncEditors);
+    });
+
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', syncEditors);
+    });
+
     // ── Category dropdown ──
     function toggleCat() { document.getElementById('catWrap').classList.toggle('open'); }
     function pickCat(el) {
@@ -277,10 +318,7 @@
         if (w && !w.contains(e.target)) w.classList.remove('open');
     });
 
-    // ── Editor ──
-    function ec(cmd) { document.execCommand(cmd,false,null); document.getElementById('an-editor').focus(); syncDesc(); }
-    function syncDesc() { document.getElementById('an-hidden').value = document.getElementById('an-editor').innerText; }
-    document.getElementById('aduanForm').addEventListener('submit', syncDesc);
+    // ── Editor ── (handled by syncEditors above)
 
     // ── Upload ──
     let upFiles=[];

@@ -476,7 +476,7 @@
                     </span>
                 </div>
                 <div class="pg-widget-list">
-                    @forelse($items->where('type', 'event')->take(5) as $item)
+                    @forelse($items->where('type', 'event')->take(3) as $item)
                     <a href="{{ route('kalender.index', ['open' => $item->id]) }}" class="pg-side-card" style="text-decoration:none;">
                         <div class="pg-side-icon icon-event">
                             <svg width="13" height="13" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24">
@@ -495,6 +495,9 @@
                     <div class="pg-side-empty">Tidak ada event.</div>
                     @endforelse
                 </div>
+                @if($items->where('type', 'event')->count() > 3)
+                <a href="{{ route('kalender.index') }}" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;font-size:12px;font-weight:700;color:#7c3aed;text-decoration:none;border-top:1px solid #f0f0f5;transition:background 0.1s;" onmouseover="this.style.background='#f4f0ff'" onmouseout="this.style.background=''">Lihat semua</a>
+                @endif
             </div>
 
             {{-- Lost & Found --}}
@@ -511,7 +514,7 @@
                     </span>
                 </div>
                 <div class="pg-widget-list">
-                    @forelse($items->where('type', 'lost_found')->take(5) as $item)
+                    @forelse($items->where('type', 'lost_found')->take(3) as $item)
                     <div class="pg-side-card">
                         <div class="pg-side-icon icon-lost">
                             <svg width="13" height="13" fill="none" stroke="#92400e" viewBox="0 0 24 24">
@@ -528,6 +531,9 @@
                     <div class="pg-side-empty">Tidak ada laporan temuan.</div>
                     @endforelse
                 </div>
+                @if($items->where('type', 'lost_found')->count() > 3)
+                <a href="{{ route('temuan.index') }}" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;font-size:12px;font-weight:700;color:#7c3aed;text-decoration:none;border-top:1px solid #f0f0f5;transition:background 0.1s;" onmouseover="this.style.background='#f4f0ff'" onmouseout="this.style.background=''">Lihat semua </a>
+                @endif
             </div>
 
         </aside>

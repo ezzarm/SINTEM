@@ -11,19 +11,14 @@ use App\Http\Controllers\Admin\PengumumanController as AdminPengumumanController
 
 // ── PUBLIC ─────────────────────────────────────────────────
 Route::get('/', function () { return view('welcome'); });
-
 Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-
-Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
-})->name('password.request');
+Route::get('/forgot-password', function () { return view('auth.forgot-password'); })->name('password.request');
 
 // ── USER PANEL ─────────────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
     Route::get('/dashboard', fn() => redirect()->route('pengumuman.index'))->name('dashboard');
 
     // Pengumuman
@@ -32,20 +27,25 @@ Route::middleware(['auth'])->group(function () {
     // Kalender
     Route::get('/kalender', [KalenderController::class, 'index'])->name('kalender.index');
 
-    // Informasi Temuan — list page
+    // Informasi Temuan — list
     Route::get('/temuan', [TemuanController::class, 'index'])->name('temuan.index');
 
-    // Lapor Temuan / Kehilangan — sub-menu of Informasi Temuan
+    // Lapor Temuan / Kehilangan — form (sub-menu of Informasi Temuan)
     Route::get('/temuan/buat',  [TemuanController::class, 'create'])->name('temuan.buat');
     Route::post('/temuan/buat', [TemuanController::class, 'store'])->name('temuan.store');
 
-    // Buat Laporan (sidebar main menu) — anonymous complaint form
+    // Buat Laporan (sidebar) — anonymous complaint form
     Route::get('/laporan/buat',  [LaporanController::class, 'create'])->name('laporan.buat');
     Route::post('/laporan/buat', [LaporanController::class, 'store'])->name('laporan.store');
 
-    // Manajemen Laporan sub-menus (view only — no create from here)
-    Route::get('/laporan/temuan', [LaporanController::class, 'temuan'])->name('laporan.temuan');
-    Route::get('/laporan/anonim', [LaporanController::class, 'anonim'])->name('laporan.anonim');
+    // Manajemen Laporan — Laporan Temuan (user view + edit + delete)
+    Route::get('/laporan/temuan',      [LaporanController::class, 'temuan'])->name('laporan.temuan');
+    Route::put('/temuan/{id}',         [LaporanController::class, 'updateTemuan'])->name('laporan.temuan.update');
+    Route::delete('/temuan/{id}',      [LaporanController::class, 'destroyTemuan'])->name('laporan.temuan.destroy');
+
+    // Manajemen Laporan — Laporan Anonim (user view + delete only)
+    Route::get('/laporan/anonim',          [LaporanController::class, 'anonim'])->name('laporan.anonim');
+    Route::delete('/laporan/anonim/{id}',  [LaporanController::class, 'destroyAnonim'])->name('laporan.anonim.destroy');
 
     // Profile
     Route::get('/profile',          [ProfileController::class, 'show'])->name('profile.show');

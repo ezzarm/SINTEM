@@ -109,8 +109,8 @@
     .kl-card-desc  { font-size:12.5px;color:#6b7280;line-height:1.55;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
     .kl-card-footer { display:flex;align-items:center;justify-content:space-between;margin-top:4px; }
     .kl-badge { font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;border:1.5px solid; }
-    .kl-detail-link { font-size:12px;font-weight:700;color:#7c3aed;text-decoration:none;transition:color 0.12s; }
-    .kl-detail-link:hover { color:#4f28d9; }
+    .kl-detail-link { font-size:12px;font-weight:700;color:#7c3aed;text-decoration:none;padding:5px 12px;border:1.5px solid #c4b5fd;border-radius:6px;background:#faf8ff;transition:background 0.12s,color 0.12s,border-color 0.12s;display:inline-flex;align-items:center;gap:5px; }
+    .kl-detail-link:hover { color:#4f28d9;background:#ede9fe;border-color:#a78bfa; }
     .kl-empty { grid-column:1/-1;text-align:center;padding:60px 20px;color:#9ca3af;font-size:13px; }
     .kl-empty svg { margin:0 auto 12px;display:block; }
 
@@ -325,7 +325,7 @@
                 <div class="kl-card-body">
                     <div class="kl-card-title">{{ $event->event_name }}</div>
                     <div class="kl-card-date">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="1.8"/><line x1="16" y1="2" x2="16" y2="6" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke-width="1.8"/></svg>
+                        <svg width="12" height="12" fill="none" stroke="#9025FB" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="1.8"/><line x1="16" y1="2" x2="16" y2="6" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke-width="1.8"/></svg>
                         {{ $dateStr }}
                     </div>
                     @if($event->description)
@@ -333,7 +333,7 @@
                     @endif
                     <div class="kl-card-footer">
                         <span class="kl-badge" style="color:{{ $color }};border-color:{{ $color }};background:{{ $color }}18;">{{ $event->category_name }}</span>
-                        <span class="kl-detail-link">Lihat detail →</span>
+                        <span class="kl-detail-link">Lihat detail</span>
                     </div>
                 </div>
             </div>
