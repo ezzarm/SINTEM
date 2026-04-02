@@ -208,4 +208,9 @@ class PengumumanController extends Controller
 
         return back()->with('success', $ann->is_published ? 'Pengumuman dijadikan draft.' : 'Pengumuman dipublikasi.');
     }
+
+    public function create()
+    {
+    return view('admin.pengumuman.buat');
+    }
 }

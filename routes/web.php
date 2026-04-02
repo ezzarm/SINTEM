@@ -8,6 +8,7 @@ use App\Http\Controllers\TemuanController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PengumumanController as AdminPengumumanController;
+use App\Http\Controllers\Admin\KalenderController  as AdminKalenderController;
 
 // ── PUBLIC ─────────────────────────────────────────────────
 Route::get('/', function () { return view('welcome'); });
@@ -21,49 +22,49 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', fn() => redirect()->route('pengumuman.index'))->name('dashboard');
 
-    // Pengumuman
     Route::get('/pengumuman', [PengumumanController::class, 'index'])->name('pengumuman.index');
+    Route::get('/kalender',   [KalenderController::class,   'index'])->name('kalender.index');
 
-    // Kalender
-    Route::get('/kalender', [KalenderController::class, 'index'])->name('kalender.index');
-
-    // Informasi Temuan — list
-    Route::get('/temuan', [TemuanController::class, 'index'])->name('temuan.index');
-
-    // Lapor Temuan / Kehilangan — form (sub-menu of Informasi Temuan)
+    Route::get('/temuan',       [TemuanController::class, 'index'])->name('temuan.index');
     Route::get('/temuan/buat',  [TemuanController::class, 'create'])->name('temuan.buat');
     Route::post('/temuan/buat', [TemuanController::class, 'store'])->name('temuan.store');
 
-    // Buat Laporan (sidebar) — anonymous complaint form
     Route::get('/laporan/buat',  [LaporanController::class, 'create'])->name('laporan.buat');
     Route::post('/laporan/buat', [LaporanController::class, 'store'])->name('laporan.store');
 
-    // Manajemen Laporan — Laporan Temuan (user view + edit + delete)
     Route::get('/laporan/temuan',      [LaporanController::class, 'temuan'])->name('laporan.temuan');
     Route::put('/temuan/{id}',         [LaporanController::class, 'updateTemuan'])->name('laporan.temuan.update');
     Route::delete('/temuan/{id}',      [LaporanController::class, 'destroyTemuan'])->name('laporan.temuan.destroy');
 
-    // Manajemen Laporan — Laporan Anonim (user view + delete only)
-    Route::get('/laporan/anonim',          [LaporanController::class, 'anonim'])->name('laporan.anonim');
-    Route::delete('/laporan/anonim/{id}',  [LaporanController::class, 'destroyAnonim'])->name('laporan.anonim.destroy');
+    Route::get('/laporan/anonim',         [LaporanController::class, 'anonim'])->name('laporan.anonim');
+    Route::delete('/laporan/anonim/{id}', [LaporanController::class, 'destroyAnonim'])->name('laporan.anonim.destroy');
 
-    // Profile
     Route::get('/profile',          [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-
 });
 
 // ── ADMIN PANEL ────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 
-    Route::get('/pengumuman',               [AdminPengumumanController::class, 'index'])->name('pengumuman.index');
-    Route::post('/pengumuman',              [AdminPengumumanController::class, 'store'])->name('pengumuman.store');
-    Route::put('/pengumuman/{id}',          [AdminPengumumanController::class, 'update'])->name('pengumuman.update');
-    Route::delete('/pengumuman/{id}',       [AdminPengumumanController::class, 'destroy'])->name('pengumuman.destroy');
-    Route::patch('/pengumuman/{id}/toggle', [AdminPengumumanController::class, 'toggleDraft'])->name('pengumuman.toggleDraft');
+    // Pengumuman
+    Route::prefix('pengumuman')->name('pengumuman.')->group(function () {
+        Route::get('/',              [AdminPengumumanController::class, 'index'])->name('index');
+        Route::get('/buat',          [AdminPengumumanController::class, 'create'])->name('buat');
+        Route::post('/',             [AdminPengumumanController::class, 'store'])->name('store');
+        Route::put('/{id}',          [AdminPengumumanController::class, 'update'])->name('update');
+        Route::delete('/{id}',       [AdminPengumumanController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle', [AdminPengumumanController::class, 'toggleDraft'])->name('toggleDraft');
+    });
 
-    Route::get('/kalender',       fn() => 'coming soon')->name('kalender.index');
+    // Kalender Kegiatan
+    Route::prefix('kalender')->name('kalender.')->group(function () {
+        Route::get('/',              [AdminKalenderController::class, 'index'])->name('index');
+        Route::post('/',             [AdminKalenderController::class, 'store'])->name('store');
+        Route::put('/{id}',          [AdminKalenderController::class, 'update'])->name('update');
+        Route::delete('/{id}',       [AdminKalenderController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle', [AdminKalenderController::class, 'toggle'])->name('toggle');
+    });
+
     Route::get('/temuan',         fn() => 'coming soon')->name('temuan.index');
     Route::get('/laporan/anonim', fn() => 'coming soon')->name('laporan.anonim');
-
 });
