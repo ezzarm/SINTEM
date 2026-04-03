@@ -220,7 +220,33 @@
     .km-meta-label { font-size:10.5px;color:#9ca3af;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px; }
     .km-meta-value { font-size:13px;color:#1a1a2e;font-weight:600;line-height:1.35; }
     .km-divider { height:1px;background:#f0f0f5;margin-bottom:14px; }
-    .km-desc { font-size:13px;color:#4b5563;line-height:1.7;white-space:pre-line; }
+    .km-desc { 
+        font-size: 13px; 
+        color: #4b5563; 
+        line-height: 1.7; 
+        white-space: pre-line; 
+        word-break: break-word; 
+    }
+
+    .km-desc.collapsed {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+    }
+
+    .btn-see-more {
+        display: none;
+        background: none;
+        border: none;
+        color: #7c3aed;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 0;
+        margin-top: 8px;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    
 </style>
 @endpush
 
@@ -487,6 +513,8 @@
 
             <div class="km-divider"></div>
             <div class="km-desc" id="modalDesc">—</div>
+            <div class="km-desc collapsed" id="modalDesc">—</div>
+            <button type="button" id="btnSeeMore" class="btn-see-more" onclick="toggleReadMore()">See more</button>
         </div>
     </div>
 </div>
@@ -495,9 +523,17 @@
 @push('scripts')
 <script>
     let klTimer;
-    function debounceKl(form) { clearTimeout(klTimer); klTimer = setTimeout(() => form.submit(), 500); }
+    // Fungsi debounce untuk search input
+    function debounceKl(form) { 
+        clearTimeout(klTimer); 
+        klTimer = setTimeout(() => form.submit(), 500); 
+    }
 
-    function toggleKlDd() { document.getElementById('filterDd').classList.toggle('open'); }
+    // Dropdown Filter Logic
+    function toggleKlDd() { 
+        document.getElementById('filterDd').classList.toggle('open'); 
+    }
+
     function selectFilter(val, lbl) {
         document.getElementById('filterInput').value = val;
         document.getElementById('filterLabel').textContent = lbl;
@@ -505,24 +541,36 @@
         document.getElementById('filterDd').classList.remove('open');
         document.getElementById('kalenderForm').submit();
     }
+
+    // Close dropdown saat klik di luar area
     document.addEventListener('click', e => {
         const dd = document.getElementById('filterDd');
         if (dd && !dd.contains(e.target)) dd.classList.remove('open');
     });
 
+    /**
+     * MODAL LOGIC
+     */
     function openModal(d) {
         const imgEl = document.getElementById('modalImg');
+        const descEl = document.getElementById('modalDesc');
+        const btnSee = document.getElementById('btnSeeMore');
+        const locRow = document.getElementById('modalLocRow');
+        const overlay = document.getElementById('klOverlay');
+
+        // 1. Setup Image
         imgEl.innerHTML = d.photo
             ? `<img src="${d.photo}" alt="${d.event_name}" onerror="this.parentElement.innerHTML='<span style=font-size:48px>📅</span>'">`
             : `<span style="font-size:48px;">📅</span>`;
 
+        // 2. Setup Badge & Meta
         const color = d.category_color || '#9025FB';
         document.getElementById('modalBadge').innerHTML =
             `<span class="kl-badge" style="color:${color};border-color:${color};background:${color}18;">${d.category_name || ''}</span>`;
         document.getElementById('modalTitle').textContent = d.event_name || '—';
         document.getElementById('modalDate').textContent  = d.date_str  || '—';
 
-        const locRow = document.getElementById('modalLocRow');
+        // 3. Setup Location Row
         if (d.location_name) {
             locRow.style.display = 'flex';
             document.getElementById('modalLoc').textContent = d.location_name;
@@ -530,38 +578,58 @@
             locRow.style.display = 'none';
         }
 
-        document.getElementById('modalDesc').textContent = d.description || 'Tidak ada deskripsi.';
-        document.getElementById('klOverlay').classList.add('open');
+        // 4. Setup Description (See More / See Less Logic)
+        const fullDesc = d.description || 'Tidak ada deskripsi.';
+        descEl.textContent = fullDesc;
+        
+        // Reset state modal ke kondisi awal (pendek)
+        descEl.classList.add('collapsed');
+        btnSee.textContent = 'See more';
+        btnSee.style.display = 'none'; // Sembunyikan dulu untuk kalkulasi
+
+        // 5. Show Modal
+        overlay.classList.add('open');
         document.body.style.overflow = 'hidden';
+
+        // 6. Cek Overflow untuk tombol See More
+        // Timeout 10ms memastikan DOM sudah selesai rendering teks
+        setTimeout(() => {
+            if (descEl.scrollHeight > descEl.clientHeight) {
+                btnSee.style.display = 'block';
+            }
+        }, 10);
     }
 
-    function closeModal(e)   { if (e.target === document.getElementById('klOverlay')) closeModalBtn(); }
-    function closeModalBtn() { document.getElementById('klOverlay').classList.remove('open'); document.body.style.overflow = ''; }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalBtn(); });
+    // Fungsi Toggle See More / See Less
+    function toggleReadMore() {
+        const descEl = document.getElementById('modalDesc');
+        const btnSee = document.getElementById('btnSeeMore');
 
-    {{-- Auto-open from pengumuman page — fires only once thanks to session --}}
-    @if($openEvent)
-    @php
-        $oe = $openEvent;
-        $oeDateStr = \Carbon\Carbon::parse($oe->event_date)->locale('id')->isoFormat('dddd, D MMMM YYYY');
-        if ($oe->event_date_end && $oe->event_date_end !== $oe->event_date) {
-            $oeDateStr = \Carbon\Carbon::parse($oe->event_date)->locale('id')->isoFormat('ddd, D MMM')
-                       . ' – '
-                       . \Carbon\Carbon::parse($oe->event_date_end)->locale('id')->isoFormat('ddd, D MMM YYYY');
+        if (descEl.classList.contains('collapsed')) {
+            descEl.classList.remove('collapsed');
+            btnSee.textContent = 'See less';
+        } else {
+            descEl.classList.add('collapsed');
+            btnSee.textContent = 'See more';
         }
-        $oePhoto = $oe->photos->first();
-        $oeData  = [
-            'id'            => $oe->id,
-            'event_name'    => $oe->event_name,
-            'description'   => $oe->description,
-            'category_name' => $oe->category_name,
-            'category_color'=> $oe->category_color,
-            'location_name' => $oe->location_name ?? null,
-            'author'        => $oe->author,
-            'photo'         => $oePhoto ? asset('storage/'.$oePhoto->file_path) : null,
-            'date_str'      => $oeDateStr,
-        ];
-    @endphp
+    }
+
+    function closeModal(e) { 
+        if (e.target === document.getElementById('klOverlay')) closeModalBtn(); 
+    }
+
+    function closeModalBtn() { 
+        document.getElementById('klOverlay').classList.remove('open'); 
+        document.body.style.overflow = ''; 
+    }
+
+    // Keyboard Accessibility
+    document.addEventListener('keydown', e => { 
+        if (e.key === 'Escape') closeModalBtn(); 
+    });
+
+    // Auto-open dari session (jika ada)
+    @if(isset($oeData))
     document.addEventListener('DOMContentLoaded', () => openModal(@json($oeData)));
     @endif
 </script>

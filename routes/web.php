@@ -9,6 +9,8 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PengumumanController as AdminPengumumanController;
 use App\Http\Controllers\Admin\KalenderController  as AdminKalenderController;
+use App\Http\Controllers\Admin\TemuanController    as AdminTemuanController;
+use App\Http\Controllers\Admin\LaporanAnonimController as AdminLaporanAnonimController;
 
 // ── PUBLIC ─────────────────────────────────────────────────
 Route::get('/', function () { return view('welcome'); });
@@ -65,6 +67,20 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::patch('/{id}/toggle', [AdminKalenderController::class, 'toggle'])->name('toggle');
     });
 
-    Route::get('/temuan',         fn() => 'coming soon')->name('temuan.index');
-    Route::get('/laporan/anonim', fn() => 'coming soon')->name('laporan.anonim');
+    // Informasi Temuan
+    Route::prefix('temuan')->name('temuan.')->group(function () {
+        Route::get('/',              [AdminTemuanController::class, 'index'])  ->name('index');
+        Route::post('/',             [AdminTemuanController::class, 'store'])  ->name('store');
+        Route::put('/{id}',          [AdminTemuanController::class, 'update']) ->name('update');
+        Route::delete('/{id}',       [AdminTemuanController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/approve',[AdminTemuanController::class, 'approve'])->name('approve');
+        Route::patch('/{id}/reject', [AdminTemuanController::class, 'reject']) ->name('reject');
+    });
+
+    // Laporan Anonim
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/anonim',              [AdminLaporanAnonimController::class, 'index'])       ->name('anonim');
+        Route::patch('/anonim/{id}/status',[AdminLaporanAnonimController::class, 'updateStatus'])->name('anonim.status');
+        Route::delete('/anonim/{id}',      [AdminLaporanAnonimController::class, 'destroy'])     ->name('anonim.destroy');
+    });
 });

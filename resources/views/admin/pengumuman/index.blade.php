@@ -10,7 +10,7 @@
         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/>
         </svg>
-        Publish Pengumuman
+        Tambah Pengumuman
     </a>
 </div>
 @endsection
@@ -76,6 +76,13 @@
     }
     .adm-search::placeholder { color:#c4c4cc; }
     .adm-search:focus { border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.1); }
+    .adm-per-page-select {
+        padding:5px 28px 5px 8px;border:1px solid #e5e7eb;border-radius:5px;
+        font-size:12.5px;font-family:'Lato',sans-serif;outline:none;
+        color:#374151;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 8px center;
+        appearance:none;-webkit-appearance:none;cursor:pointer;transition:border-color 0.12s;
+    }
+    .adm-per-page-select:focus { border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.1); }
 
     /* Table */
     .adm-body { flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none; }
@@ -136,9 +143,29 @@
     .adm-page-btn.disabled { opacity:0.4;pointer-events:none; }
 
     /* Alert */
-    .adm-alert { margin:16px 32px 0;padding:10px 14px;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:8px;flex-shrink:0; }
+    .adm-alert { margin:16px 32px 0;padding:10px 14px;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:8px;flex-shrink:0;transition:opacity 0.4s; }
     .adm-alert-success { background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a; }
     .adm-alert-error   { background:#fef2f2;border:1px solid #fecaca;color:#dc2626; }
+
+    /* ── CARD VIEW (breakpoint ≤900px) ── */
+    .cards-wrap { display:none;padding:16px 16px 32px;gap:12px;flex-direction:column; }
+    .item-card { border:1px solid #f0f0f5;border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);transition:box-shadow 0.15s,border-color 0.15s; }
+    .item-card:hover { box-shadow:0 4px 16px rgba(109,40,217,0.08);border-color:#e9d5ff; }
+    .card-photo { width:100%;height:140px;object-fit:cover;display:block; }
+    .card-photo-placeholder { width:100%;height:80px;background:#f4f4f8;display:flex;align-items:center;justify-content:center; }
+    .card-body { padding:12px 14px; }
+    .card-title { font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:4px;line-height:1.3; }
+    .card-meta  { font-size:12px;color:#9ca3af;margin-bottom:8px; }
+    .card-foot  { display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid #f5f5f7; }
+
+    @media (max-width:900px) {
+        .adm-table-wrap { display:none; }
+        .cards-wrap { display:flex; }
+        .adm-search { width:160px; }
+        .adm-toolbar { padding:12px 16px 10px; }
+        .adm-pagination { padding:12px 16px; }
+        .adm-alert { margin:12px 16px 0; }
+    }
 
     /* ══ PANEL OVERLAY ══ */
     .panel-overlay { display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.3); }
@@ -264,13 +291,13 @@
 
 {{-- Alerts --}}
 @if(session('success'))
-<div class="adm-alert adm-alert-success">
+<div class="adm-alert adm-alert-success" id="flash-alert">
     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
     {{ session('success') }}
 </div>
 @endif
 @if(session('error'))
-<div class="adm-alert adm-alert-error">
+<div class="adm-alert adm-alert-error" id="flash-alert">
     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke-width="2.5" stroke-linecap="round"/></svg>
     {{ session('error') }}
 </div>
@@ -305,7 +332,7 @@
 
         <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#6b7280;">
             <span>Per halaman:</span>
-            <select name="per_page" onchange="this.form.submit()" style="padding:5px 8px;border:1px solid #e5e7eb;border-radius:5px;font-size:12.5px;font-family:'Lato',sans-serif;outline:none;">
+            <select name="per_page" onchange="this.form.submit()" class="adm-per-page-select">
                 @foreach([10,25,50] as $n)
                 <option value="{{ $n }}" {{ $perPage==$n?'selected':'' }}>{{ $n }}</option>
                 @endforeach
@@ -374,9 +401,20 @@
                                     class="action-btn action-btn-archive"
                                     title="{{ $item->is_published ? 'Arsipkan (jadikan Draft)' : 'Publish' }}"
                                     onclick="confirmArchive({{ $item->id }}, '{{ addslashes($item->title) }}', {{ $item->is_published ? 'true' : 'false' }})">
+                                @if($item->is_published)
+                                {{-- Folder open = published → click to archive --}}
                                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                                    <line stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" x1="8" y1="14" x2="16" y2="14"/>
                                 </svg>
+                                @else
+                                {{-- Folder with slash = draft → click to publish --}}
+                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                                    <line stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" x1="9" y1="12" x2="15" y2="18"/>
+                                    <line stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" x1="15" y1="12" x2="9" y2="18"/>
+                                </svg>
+                                @endif
                             </button>
 
                             {{-- Delete / Trash — Red --}}
@@ -406,6 +444,54 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    {{-- CARD VIEW (mobile/narrow) --}}
+    <div class="cards-wrap">
+        @forelse($items as $i => $item)
+        @php $photo = optional($item->photos->first())->file_path ? asset('storage/'.$item->photos->first()->file_path) : null; @endphp
+        <div class="item-card">
+            @if($photo)
+            <img class="card-photo" src="{{ $photo }}" alt="{{ $item->title }}" onerror="this.style.display='none'">
+            @else
+            <div class="card-photo-placeholder"><svg width="24" height="24" fill="none" stroke="#c4c4d4" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.5" stroke-width="1.5"/><polyline stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" points="21 15 16 10 5 21"/></svg></div>
+            @endif
+            <div class="card-body">
+                <div class="card-title">{{ $item->title }}</div>
+                <div class="card-meta">
+                    {{ $item->is_published ? \Carbon\Carbon::parse($item->created_at)->format('d M Y, H:i').' WIB' : 'Belum dipublish' }}
+                    · <span class="status-badge {{ $item->is_published ? 'status-published' : 'status-draft' }}">{{ $item->is_published ? 'Published' : 'Draft' }}</span>
+                </div>
+                <div class="card-foot">
+                    <button type="button" class="action-btn action-btn-edit" title="Edit"
+                        onclick="openEditPanel({{ json_encode(['id'=>$item->id,'title'=>$item->title,'content'=>$item->content,'is_published'=>$item->is_published,'photo'=>$photo]) }})">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button type="button" class="action-btn action-btn-archive" title="{{ $item->is_published ? 'Arsipkan' : 'Publish' }}"
+                        onclick="confirmArchive({{ $item->id }}, '{{ addslashes($item->title) }}', {{ $item->is_published ? 'true' : 'false' }})">
+                        @if($item->is_published)
+                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                            <line stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" x1="8" y1="14" x2="16" y2="14"/>
+                        </svg>
+                        @else
+                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                            <line stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" x1="9" y1="12" x2="15" y2="18"/>
+                            <line stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" x1="15" y1="12" x2="9" y2="18"/>
+                        </svg>
+                        @endif
+                    </button>
+                    <button type="button" class="action-btn action-btn-delete" title="Hapus"
+                        onclick="confirmDelete({{ $item->id }}, '{{ addslashes($item->title) }}')">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" points="3 6 5 6 21 6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div style="text-align:center;padding:48px 16px;color:#9ca3af;font-size:13px;">Tidak ada pengumuman.</div>
+        @endforelse
     </div>
 </div>
 
@@ -538,6 +624,17 @@
     // ── Debounce ──
     let _st;
     function debounce(form) { clearTimeout(_st); _st = setTimeout(()=>form.submit(),500); }
+
+    // ── Auto-dismiss flash alert ──
+    (function() {
+        const alert = document.getElementById('flash-alert');
+        if (alert) {
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 400);
+            }, 4000);
+        }
+    })();
 
     // ── Dropdown ──
     function toggleDd(id) { document.getElementById(id).classList.toggle('open'); }
