@@ -45,7 +45,6 @@ class PengumumanController extends Controller
         $total   = $query->count();
         $items   = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
-        // Attach photos and attachments
         foreach ($items as $item) {
             $item->photos = DB::table('photos')
                 ->where('source_type', 'announcement')
@@ -64,23 +63,35 @@ class PengumumanController extends Controller
 
     public function store(Request $request)
     {
+        // =============================================
+        // DEBUG SEMENTARA — hapus setelah masalah solved
+        dd([
+            'hasFile_photo'      => $request->hasFile('photo'),
+            'allFiles'           => $request->allFiles(),
+            'is_published'       => $request->is_published,
+            'title'              => $request->title,
+            'content_length'     => strlen($request->content ?? ''),
+            'method'             => $request->method(),
+            'content_type_header'=> $request->header('Content-Type'),
+        ]);
+        // =============================================
+
         $request->validate([
-            'title'       => 'required|string|max:255',
-            'content'     => 'required|string',
-            'is_published'=> 'required|in:0,1',
-            'photo'       => 'nullable|image|max:5120',
+            'title'        => 'required|string|max:255',
+            'content'      => 'required|string',
+            'is_published' => 'required|in:0,1',
+            'photo'        => 'nullable|image|max:5120',
         ]);
 
         $announcementId = DB::table('announcements')->insertGetId([
             'title'        => $request->title,
             'content'      => $request->content,
             'is_published' => $request->is_published,
-            'created_by'   => auth()->id(),
+            'created_by'   => auth()->user()->id,
             'created_at'   => now(),
             'updated_at'   => now(),
         ]);
 
-        // Photo upload
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
             $path = $file->store('uploads/photos/announcements', 'public');
@@ -91,13 +102,12 @@ class PengumumanController extends Controller
                 'file_path'   => $path,
                 'file_type'   => $file->getMimeType(),
                 'file_size'   => $file->getSize(),
-                'uploaded_by' => auth()->id(),
+                'uploaded_by' => auth()->user()->id,
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);
         }
 
-        // File attachment
         if ($request->hasFile('attachment_file')) {
             $file = $request->file('attachment_file');
             $path = $file->store('uploads/attachments/announcements', 'public');
@@ -110,22 +120,7 @@ class PengumumanController extends Controller
                 'file_type'       => $file->getMimeType(),
                 'file_size'       => $file->getSize(),
                 'label'           => $request->attachment_label ?? null,
-                'uploaded_by'     => auth()->id(),
-                'created_at'      => now(),
-                'updated_at'      => now(),
-            ]);
-        }
-
-        // Link attachment
-        if ($request->filled('link_url')) {
-            DB::table('attachments')->insert([
-                'source_type'     => 'announcement',
-                'source_id'       => $announcementId,
-                'attachment_type' => 'link',
-                'link_url'        => $request->link_url,
-                'link_label'      => $request->link_label ?? 'Lihat Link',
-                'label'           => $request->link_label ?? null,
-                'uploaded_by'     => auth()->id(),
+                'uploaded_by'     => auth()->user()->id,
                 'created_at'      => now(),
                 'updated_at'      => now(),
             ]);
@@ -140,6 +135,7 @@ class PengumumanController extends Controller
             'title'        => 'required|string|max:255',
             'content'      => 'required|string',
             'is_published' => 'required|in:0,1',
+            'photo'        => 'nullable|image|max:5120',
         ]);
 
         DB::table('announcements')->where('id', $id)->update([
@@ -149,16 +145,20 @@ class PengumumanController extends Controller
             'updated_at'   => now(),
         ]);
 
-        // Replace photo if new one uploaded
         if ($request->hasFile('photo')) {
-            // Delete old
-            $oldPhoto = DB::table('photos')->where('source_type','announcement')->where('source_id',$id)->first();
+            $oldPhoto = DB::table('photos')
+                ->where('source_type', 'announcement')
+                ->where('source_id', $id)
+                ->first();
+
             if ($oldPhoto) {
                 Storage::disk('public')->delete($oldPhoto->file_path);
                 DB::table('photos')->where('id', $oldPhoto->id)->delete();
             }
+
             $file = $request->file('photo');
             $path = $file->store('uploads/photos/announcements', 'public');
+
             DB::table('photos')->insert([
                 'source_type' => 'announcement',
                 'source_id'   => $id,
@@ -166,7 +166,7 @@ class PengumumanController extends Controller
                 'file_path'   => $path,
                 'file_type'   => $file->getMimeType(),
                 'file_size'   => $file->getSize(),
-                'uploaded_by' => auth()->id(),
+                'uploaded_by' => auth()->user()->id,
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);
@@ -177,14 +177,12 @@ class PengumumanController extends Controller
 
     public function destroy($id)
     {
-        // Delete photos
         $photos = DB::table('photos')->where('source_type','announcement')->where('source_id',$id)->get();
         foreach ($photos as $p) {
             Storage::disk('public')->delete($p->file_path);
         }
         DB::table('photos')->where('source_type','announcement')->where('source_id',$id)->delete();
 
-        // Delete attachments
         $attachments = DB::table('attachments')->where('source_type','announcement')->where('source_id',$id)->get();
         foreach ($attachments as $a) {
             if ($a->file_path) Storage::disk('public')->delete($a->file_path);
@@ -211,6 +209,6 @@ class PengumumanController extends Controller
 
     public function create()
     {
-    return view('admin.pengumuman.buat');
+        return view('admin.pengumuman.buat');
     }
 }

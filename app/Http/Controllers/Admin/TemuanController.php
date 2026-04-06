@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 
 class TemuanController extends Controller
@@ -43,7 +44,6 @@ class TemuanController extends Controller
         $total = $query->count();
         $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
-        // Build photo map keyed by lost_found id
         $ids = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
@@ -73,8 +73,8 @@ class TemuanController extends Controller
             'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        // Use admin's user_id as uploader
-        $adminId = auth()->id();
+        // FIX: pakai auth()->user()->id untuk integer primary key
+        $adminId = auth()->user()->id;
 
         $id = DB::table('lost_founds')->insertGetId([
             'user_id'     => $adminId,
@@ -88,14 +88,15 @@ class TemuanController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('upload/photos/lost_founds', 'public');
+            $file = $request->file('photo');
+            $path = $file->store('upload/photos/lost_founds', 'public');
             DB::table('photos')->insert([
                 'source_type' => 'lost_found',
                 'source_id'   => $id,
-                'file_name'   => $request->file('photo')->getClientOriginalName(),
+                'file_name'   => $file->getClientOriginalName(),
                 'file_path'   => $path,
-                'file_type'   => $request->file('photo')->getMimeType(),
-                'file_size'   => $request->file('photo')->getSize(),
+                'file_type'   => $file->getMimeType(),
+                'file_size'   => $file->getSize(),
                 'uploaded_by' => $adminId,
                 'created_at'  => now(),
                 'updated_at'  => now(),
@@ -134,21 +135,29 @@ class TemuanController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            // Remove old photo
-            DB::table('photos')
+            // Hapus foto lama dari storage
+            $oldPhoto = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->where('source_id', $id)
-                ->delete();
+                ->first();
+            if ($oldPhoto) {
+                Storage::disk('public')->delete($oldPhoto->file_path);
+                DB::table('photos')
+                    ->where('source_type', 'lost_found')
+                    ->where('source_id', $id)
+                    ->delete();
+            }
 
-            $path = $request->file('photo')->store('upload/photos/lost_founds', 'public');
+            $file = $request->file('photo');
+            $path = $file->store('upload/photos/lost_founds', 'public');
             DB::table('photos')->insert([
                 'source_type' => 'lost_found',
                 'source_id'   => $id,
-                'file_name'   => $request->file('photo')->getClientOriginalName(),
+                'file_name'   => $file->getClientOriginalName(),
                 'file_path'   => $path,
-                'file_type'   => $request->file('photo')->getMimeType(),
-                'file_size'   => $request->file('photo')->getSize(),
-                'uploaded_by' => auth()->id(),
+                'file_type'   => $file->getMimeType(),
+                'file_size'   => $file->getSize(),
+                'uploaded_by' => auth()->user()->id,
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);
@@ -165,6 +174,15 @@ class TemuanController extends Controller
         if (!$item) {
             return redirect()->route('admin.temuan.index')
                 ->with('error', 'Temuan tidak ditemukan.');
+        }
+
+        // Hapus foto dari storage
+        $photos = DB::table('photos')
+            ->where('source_type', 'lost_found')
+            ->where('source_id', $id)
+            ->get();
+        foreach ($photos as $photo) {
+            Storage::disk('public')->delete($photo->file_path);
         }
 
         DB::table('photos')
