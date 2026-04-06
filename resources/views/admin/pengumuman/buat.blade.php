@@ -27,7 +27,6 @@
     .form-group  { margin-bottom: 18px; }
     .form-label  { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
 
-    /* ── Notice banner ── */
     .pub-notice {
         display: flex; align-items: flex-start; gap: 10px;
         padding: 12px 14px;
@@ -37,16 +36,15 @@
     .pub-notice-text { font-size: 12.5px; color: #1d4ed8; line-height: 1.5; }
     .pub-notice-title { font-weight: 700; margin-bottom: 2px; }
 
-    /* ── Input ── */
     .form-input {
         width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 6px;
         font-size: 13px; font-family: 'Lato', sans-serif; color: #1a1a2e; background: #fff;
         outline: none; transition: border-color 0.12s, box-shadow 0.12s;
+        box-sizing: border-box;
     }
     .form-input::placeholder { color: #c4c4cc; }
     .form-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.1); }
 
-    /* ── Rich text editor ── */
     .editor-wrap {
         border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;
         transition: border-color 0.12s, box-shadow 0.12s;
@@ -75,21 +73,20 @@
     .editor-body:empty::before { content: attr(data-placeholder); color: #c4c4cc; pointer-events: none; }
     #content-hidden { display: none; }
 
-    /* ── Photo / banner upload ── */
     .upload-zone {
         border: 1.5px dashed #d1d5db; border-radius: 6px; padding: 32px 20px;
         text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s;
-        position: relative;
+        display: block;
     }
     .upload-zone:hover, .upload-zone.drag-over { border-color: #7c3aed; background: #faf8ff; }
-    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    #bannerInput { display: none; }
     .up-icon { width: 36px; height: 36px; margin: 0 auto 10px; color: #9ca3af; }
     .up-text { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
-    .up-btn  {
+    .up-btn {
         display: inline-flex; align-items: center; gap: 6px;
         padding: 7px 16px; background: linear-gradient(135deg, #9025FB, #4617D3);
         color: #fff; font-size: 12.5px; font-weight: 700;
-        font-family: 'Lato', sans-serif; border-radius: 5px; border: none; pointer-events: none;
+        font-family: 'Lato', sans-serif; border-radius: 5px; border: none;
     }
     .up-hint { margin-top: 10px; font-size: 11.5px; color: #9ca3af; }
     .up-preview { margin-top: 10px; display: none; }
@@ -100,7 +97,6 @@
         background: none; border: none; font-family: 'Lato', sans-serif;
     }
 
-    /* ── Attachment tabs ── */
     .attach-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
     .attach-tab {
         padding: 5px 12px; border-radius: 5px; font-size: 12.5px; font-weight: 600;
@@ -111,19 +107,6 @@
     .attach-pane { display: none; }
     .attach-pane.active { display: block; }
 
-    /* ── Status toggle ── */
-    .status-toggle { display: flex; gap: 6px; }
-    .status-btn {
-        flex: 1; padding: 9px; border: 1.5px solid #e5e7eb; border-radius: 6px;
-        font-size: 12.5px; font-weight: 600; font-family: 'Lato', sans-serif;
-        color: #6b7280; background: #fff; cursor: pointer; text-align: center;
-        transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-    .status-btn:hover { border-color: #c4b5fd; color: #4f28d9; }
-    .status-btn.active-published { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
-    .status-btn.active-draft     { border-color: #6b7280; color: #374151; background: #f9fafb; }
-
-    /* ── Actions ── */
     .form-actions {
         display: flex; justify-content: flex-end; gap: 10px;
         margin-top: 24px; padding-top: 20px; border-top: 1px solid #f0f0f5;
@@ -160,7 +143,6 @@
 <div class="form-card">
     <div class="form-card-title">Buat Pengumuman Baru</div>
 
-    {{-- Info notice --}}
     <div class="pub-notice">
         <svg width="15" height="15" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -171,14 +153,35 @@
         </div>
     </div>
 
+    {{-- Tampilkan error validasi --}}
+    @if ($errors->any())
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:12px 14px;margin-bottom:18px;">
+            <p style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:6px;">Terjadi kesalahan:</p>
+            <ul style="margin:0;padding-left:18px;">
+                @foreach ($errors->all() as $error)
+                    <li style="font-size:12.5px;color:#dc2626;">{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    {{-- Success message --}}
+    @if (session('success'))
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:12px 14px;margin-bottom:18px;">
+            <p style="font-size:13px;color:#16a34a;">{{ session('success') }}</p>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('admin.pengumuman.store') }}" enctype="multipart/form-data" id="buatForm">
         @csrf
 
         {{-- Foto / Banner --}}
         <div class="form-group">
             <label class="form-label">Foto / Banner <span style="font-weight:400;color:#9ca3af;font-size:12px;">(opsional)</span></label>
-            <div class="upload-zone" id="bannerZone" ondragover="upOver(event)" ondragleave="upLeave()" ondrop="upDrop(event)">
-                <input type="file" name="photo" id="bannerInput" accept="image/png,image/jpeg,image/webp" onchange="upHandle(this.files)">
+            <label class="upload-zone" id="bannerZone" for="bannerInput"
+                   ondragover="upOver(event)" ondragleave="upLeave(event)" ondrop="upDrop(event)">
+                <input type="file" name="photo" id="bannerInput" accept="image/png,image/jpeg,image/webp"
+                       onchange="upHandle(this.files)">
                 <div id="bannerPh">
                     <div class="up-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:100%;height:100%">
@@ -193,13 +196,17 @@
                 </div>
                 <div class="up-preview" id="bannerPreview">
                     <img id="bannerPreviewImg" src="" alt="preview">
-                    <button type="button" class="up-preview-remove" onclick="removePreview()">
+                    <button type="button" class="up-preview-remove"
+                            onclick="event.preventDefault(); event.stopPropagation(); removePreview()">
                         <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                         Hapus foto
                     </button>
                 </div>
-            </div>
+            </label>
             <div class="up-hint">PNG, JPG, WEBP — maks. 5MB</div>
+            @error('photo')
+                <p style="color:#dc2626;font-size:12px;margin-top:4px;">{{ $message }}</p>
+            @enderror
         </div>
 
         {{-- Judul --}}
@@ -207,6 +214,9 @@
             <label class="form-label" for="pub-title">Judul Pengumuman <span style="color:#dc2626;">*</span></label>
             <input type="text" id="pub-title" name="title" class="form-input"
                    placeholder="Masukkan judul pengumuman..." value="{{ old('title') }}" required>
+            @error('title')
+                <p style="color:#dc2626;font-size:12px;margin-top:4px;">{{ $message }}</p>
+            @enderror
         </div>
 
         {{-- Isi / Konten --}}
@@ -236,6 +246,9 @@
                      data-placeholder="Tulis isi pengumuman di sini..."></div>
             </div>
             <textarea name="content" id="content-hidden">{{ old('content') }}</textarea>
+            @error('content')
+                <p style="color:#dc2626;font-size:12px;margin-top:4px;">{{ $message }}</p>
+            @enderror
         </div>
 
         {{-- Lampiran (opsional) --}}
@@ -310,13 +323,23 @@
         editor.addEventListener('input', syncEditors);
     });
 
+    // sync content sebelum submit
     document.getElementById('buatForm').addEventListener('submit', syncEditors);
 
     // ── Banner upload ──
     function upHandle(files) {
         const file = files[0];
-        if (!file || !['image/png','image/jpeg','image/webp'].includes(file.type)) return;
-        if (file.size > 5 * 1024 * 1024) return;
+        if (!file) return;
+        if (!['image/png','image/jpeg','image/webp'].includes(file.type)) {
+            alert('Format tidak didukung. Gunakan PNG, JPG, atau WEBP.');
+            document.getElementById('bannerInput').value = '';
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Ukuran file melebihi 5MB.');
+            document.getElementById('bannerInput').value = '';
+            return;
+        }
         const reader = new FileReader();
         reader.onload = e => {
             document.getElementById('bannerPh').style.display = 'none';
@@ -325,20 +348,29 @@
         };
         reader.readAsDataURL(file);
     }
+
     function removePreview() {
         document.getElementById('bannerInput').value = '';
         document.getElementById('bannerPreview').style.display = 'none';
         document.getElementById('bannerPh').style.display = '';
     }
+
     function upOver(e)  { e.preventDefault(); document.getElementById('bannerZone').classList.add('drag-over'); }
-    function upLeave()  { document.getElementById('bannerZone').classList.remove('drag-over'); }
-    function upDrop(e)  { e.preventDefault(); document.getElementById('bannerZone').classList.remove('drag-over'); upHandle(e.dataTransfer.files); }
+    function upLeave(e) { e.preventDefault(); document.getElementById('bannerZone').classList.remove('drag-over'); }
+    function upDrop(e)  {
+        e.preventDefault();
+        document.getElementById('bannerZone').classList.remove('drag-over');
+        const dt = new DataTransfer();
+        dt.items.add(e.dataTransfer.files[0]);
+        document.getElementById('bannerInput').files = dt.files;
+        upHandle(e.dataTransfer.files);
+    }
 
     // ── Attachment tabs ──
     function switchTab(tab) {
-        document.querySelectorAll('.attach-tab').forEach((t,i)  => t.classList.toggle('active',['file','link'][i]===tab));
+        document.querySelectorAll('.attach-tab').forEach((t,i) => t.classList.toggle('active', ['file','link'][i] === tab));
         document.querySelectorAll('.attach-pane').forEach(p => p.classList.remove('active'));
-        document.getElementById('pane-'+tab).classList.add('active');
+        document.getElementById('pane-' + tab).classList.add('active');
     }
 </script>
-@endpush
+@endpushphp -i | findstr "upload_max_filesize\|post_max_size\|file_uploads"
