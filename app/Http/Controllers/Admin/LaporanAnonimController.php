@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth; 
 
 class LaporanAnonimController extends Controller
 {
@@ -15,6 +16,8 @@ class LaporanAnonimController extends Controller
         $filter  = $request->get('filter', 'semua');
         $perPage = (int) $request->get('per_page', 10);
         $page    = (int) $request->get('page', 1);
+
+        $user = Auth::user();
 
         $query = DB::table('anonymous_reports')
             ->join('report_categories', 'anonymous_reports.category_id', '=', 'report_categories.id')
@@ -27,9 +30,14 @@ class LaporanAnonimController extends Controller
                 'anonymous_reports.resolved_at',
                 'anonymous_reports.created_at',
                 'anonymous_reports.updated_at',
-                'report_categories.category_name'
+                'report_categories.category_name',
+                'report_categories.responsible_role_id'
             )
             ->orderBy('anonymous_reports.created_at', 'desc');
+
+        if ($user->role_id != 1) {
+            $query->where('report_categories.responsible_role_id', $user->role_id);
+        }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -50,7 +58,11 @@ class LaporanAnonimController extends Controller
         $total = $query->count();
         $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
-        $categories = DB::table('report_categories')->orderBy('id')->get();
+        $categoriesQuery = DB::table('report_categories')->orderBy('id');
+        if ($user->role_id != 1) {
+            $categoriesQuery->where('responsible_role_id', $user->role_id);
+        }
+        $categories = $categoriesQuery->get();
 
         return view('admin.laporan.anonim', compact(
             'items', 'total', 'page', 'perPage', 'search', 'filter', 'categories'
@@ -59,6 +71,17 @@ class LaporanAnonimController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
+        $user = Auth::user();
+        $report = DB::table('anonymous_reports')
+            ->join('report_categories', 'anonymous_reports.category_id', '=', 'report_categories.id')
+            ->where('anonymous_reports.id', $id)
+            ->select('report_categories.responsible_role_id')
+            ->first();
+
+        if ($user->role_id != 1 && $report->responsible_role_id != $user->role_id) {
+            return back()->with('error', 'Anda tidak memiliki hak akses untuk memproses laporan ini.');
+        }
+
         $request->validate([
             'status'     => 'required|in:pending,in_progress,solved',
             'admin_notes'=> 'nullable|string|max:1000',
@@ -72,7 +95,7 @@ class LaporanAnonimController extends Controller
 
         if ($request->status === 'solved') {
             $data['resolved_at'] = now();
-        } elseif ($request->status !== 'solved') {
+        } else {
             $data['resolved_at'] = null;
         }
 
@@ -83,6 +106,17 @@ class LaporanAnonimController extends Controller
 
     public function destroy($id)
     {
+        $user = Auth::user();
+        $report = DB::table('anonymous_reports')
+            ->join('report_categories', 'anonymous_reports.category_id', '=', 'report_categories.id')
+            ->where('anonymous_reports.id', $id)
+            ->select('report_categories.responsible_role_id')
+            ->first();
+
+        if ($user->role_id != 1 && $report->responsible_role_id != $user->role_id) {
+            return back()->with('error', 'Anda tidak memiliki hak akses untuk menghapus laporan ini.');
+        }
+
         DB::table('anonymous_reports')->where('id', $id)->delete();
         return back()->with('success', 'Laporan berhasil dihapus.');
     }
