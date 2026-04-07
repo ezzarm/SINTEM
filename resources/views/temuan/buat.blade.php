@@ -8,7 +8,7 @@
 @endsection
 
 @section('header', 'Lapor Temuan')
-@section('subheader', 'Unggah Laporan Temuan')
+@section('subheader', 'Unggah Laporan Temuan atau Kehilangan')
 
 @push('styles')
 <style>
@@ -55,7 +55,7 @@
     .toolbar-btn:hover { background: #ede9fe; color: #4f28d9; }
     .toolbar-btn.active { background: #ede9fe; color: #4f28d9; }
     .tb-div { width: 1px; height: 18px; background: #e5e7eb; margin: 0 3px; flex-shrink: 0; }
-    .editor-body { min-height: 180px; padding: 12px 14px; font-size: 13px; font-family: 'Lato', sans-serif; color: #374151; line-height: 1.65; outline: none; background: #fff; }
+    .editor-body { min-height: 150px; padding: 12px 14px; font-size: 13px; font-family: 'Lato', sans-serif; color: #374151; line-height: 1.65; outline: none; background: #fff; }
     .editor-body:empty::before { content: attr(data-placeholder); color: #c4c4cc; pointer-events: none; }
     #tb-hidden-desc { display: none; }
 
@@ -83,19 +83,18 @@
 
 @section('content')
 <div class="form-card">
-    <div class="form-card-title">Unggah Laporan</div>
+    <div class="form-card-title">Unggah Laporan Temuan / Kehilangan</div>
 
+    {{-- ACTION DISESUAIKAN KE temuan.store AGAR SESUAI DENGAN web.php --}}
     <form method="POST" action="{{ route('temuan.store') }}" enctype="multipart/form-data" id="temuanForm">
         @csrf
 
-        {{-- Temuan / Kehilangan --}}
+        {{-- Selector Tipe --}}
         <div class="type-selector">
             <button type="button" class="type-option active-temuan" id="btn-temuan" onclick="selectType('found')">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <circle cx="11" cy="11" r="8" stroke-width="1.8"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35"/>
-                    <line x1="11" y1="8" x2="11" y2="14" stroke-width="1.8" stroke-linecap="round"/>
-                    <line x1="8"  y1="11" x2="14" y2="11" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
                 Temuan
             </button>
@@ -103,62 +102,62 @@
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" stroke-width="1.8"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
                 Kehilangan
             </button>
         </div>
         <input type="hidden" name="type" id="typeInput" value="found">
 
-        {{-- Judul --}}
+        {{-- Nama Barang / Judul --}}
         <div class="form-group">
-            <label class="form-label" for="item_name">Judul</label>
-            <input type="text" id="item_name" name="item_name" class="form-input"
-                   placeholder="Masukkan judul pengumuman..." value="{{ old('item_name') }}" required>
+            <label class="form-label" for="item_name">Nama Barang</label>
+            <input type="text" id="item_name" name="item_name" class="form-input" 
+                   placeholder="Contoh: Kunci Motor Beat Hitam" value="{{ old('item_name') }}" required>
         </div>
 
-        {{-- Deskripsi --}}
+        {{-- Lokasi Temu/Hilang --}}
         <div class="form-group">
-            <label class="form-label">Deskripsi</label>
+            <label class="form-label" for="found_at">Lokasi Kejadian</label>
+            <input type="text" id="found_at" name="found_at" class="form-input" 
+                   placeholder="Contoh: Parkiran depan, Kantin, atau Gedung A..." value="{{ old('found_at') }}">
+        </div>
+
+        {{-- Deskripsi Rich Text --}}
+        <div class="form-group">
+            <label class="form-label">Keterangan / Ciri-ciri Barang</label>
             <div class="editor-wrap">
                 <div class="editor-toolbar">
                     <button type="button" class="toolbar-btn" data-cmd="bold"><b>B</b></button>
                     <button type="button" class="toolbar-btn" data-cmd="italic"><i>I</i></button>
                     <button type="button" class="toolbar-btn" data-cmd="underline"><u>U</u></button>
                     <div class="tb-div"></div>
-                    <button type="button" class="toolbar-btn" data-cmd="justifyLeft"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="12" x2="15" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="18" x2="18" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
-                    <button type="button" class="toolbar-btn" data-cmd="justifyCenter"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="12" x2="18" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="4" y1="18" x2="20" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
-                    <button type="button" class="toolbar-btn" data-cmd="justifyRight"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="12" x2="21" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="18" x2="21" y2="18" stroke-width="2" stroke-linecap="round"/></svg></button>
-                    <button type="button" class="toolbar-btn" data-cmd="insertOrderedList"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="12" x2="21" y2="12" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="18" x2="21" y2="18" stroke-width="2" stroke-linecap="round"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h1v4M4 10h2"/></svg></button>
-                    <div class="tb-div"></div>
-                    <button type="button" class="toolbar-btn"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+                    <button type="button" class="toolbar-btn" data-cmd="insertOrderedList">List</button>
                 </div>
                 <div class="editor-body" id="tb-editor" contenteditable="true" data-target="tb-hidden-desc"
-                     data-placeholder="Masukkan deskripsi pengumuman..."></div>
+                     data-placeholder="Masukkan detail barang..."></div>
             </div>
-            <textarea name="description" id="tb-hidden-desc">{{ old('description') }}</textarea>
+            <textarea name="description" id="tb-hidden-desc" style="display:none;">{{ old('description') }}</textarea>
         </div>
 
-        {{-- Upload (optional) --}}
+        {{-- Upload Foto --}}
         <div class="form-group">
-            <label class="form-label">Upload File <span style="font-weight:400;color:#9ca3af;font-size:12px;">(opsional)</span></label>
+            <label class="form-label">Foto Barang</label>
             <div class="upload-zone" id="up-zone" ondragover="upOver(event)" ondragleave="upLeave()" ondrop="upDrop(event)">
                 <input type="file" name="photo" id="up-input" accept="image/png,image/jpeg" onchange="upHandle(this.files)">
                 <div id="up-ph">
-                    <div class="up-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:100%;height:100%"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div>
-                    <div class="up-text">Unggah gambar anda disini, atau</div>
-                    <div class="up-btn">Cari di komputer</div>
+                    <div class="up-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:100%;height:100%"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4"/></svg></div>
+                    <div class="up-text">Klik atau tarik foto ke sini</div>
+                    <div class="up-btn">Pilih File</div>
                 </div>
                 <div class="up-previews" id="up-prev"></div>
             </div>
-            <div class="up-hint">Upload file max 5mb, PNG/JPG format</div>
+            <div class="up-hint">Maksimal 5MB, format PNG/JPG</div>
         </div>
 
         <div class="form-actions">
             <a href="{{ route('temuan.index') }}" class="btn-batal">Batal</a>
             <button type="submit" class="btn-unggah">
-                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                Unggah
+                Simpan Laporan
             </button>
         </div>
     </form>
@@ -167,58 +166,61 @@
 
 @push('scripts')
 <script>
-    // ── Rich text editor ──
+    // Rich text editor sync
+    const editor = document.getElementById('tb-editor');
+    const hiddenInput = document.getElementById('tb-hidden-desc');
+
+    editor.addEventListener('input', () => {
+        hiddenInput.value = editor.innerHTML;
+    });
+
     document.querySelectorAll('.toolbar-btn[data-cmd]').forEach(btn => {
-        btn.addEventListener('mousedown', e => {
-            e.preventDefault(); // don't steal focus
-        });
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
             const cmd = btn.dataset.cmd;
-            const editor = btn.closest('.editor-wrap').querySelector('.editor-body');
-            editor.focus();
             document.execCommand(cmd, false, null);
-            syncEditors();
-            updateToolbarStates();
+            editor.focus();
+            hiddenInput.value = editor.innerHTML;
         });
     });
 
-    function syncEditors() {
-        document.querySelectorAll('.editor-body').forEach(editor => {
-            const hidden = document.getElementById(editor.dataset.target);
-            if (hidden) hidden.value = editor.innerHTML;
-        });
-    }
-
-    function updateToolbarStates() {
-        ['bold','italic','underline'].forEach(cmd => {
-            document.querySelectorAll(`[data-cmd="${cmd}"]`).forEach(btn => {
-                btn.classList.toggle('active', document.queryCommandState(cmd));
-            });
-        });
-    }
-
-    document.querySelectorAll('.editor-body').forEach(editor => {
-        editor.addEventListener('keyup', updateToolbarStates);
-        editor.addEventListener('mouseup', updateToolbarStates);
-        editor.addEventListener('input', syncEditors);
-    });
-
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('submit', syncEditors);
-    });
-
+    // Toggle Type
     function selectType(t) {
         document.getElementById('typeInput').value = t;
         document.getElementById('btn-temuan').className = 'type-option' + (t==='found' ? ' active-temuan' : '');
         document.getElementById('btn-hilang').className = 'type-option' + (t==='lost'  ? ' active-kehilangan' : '');
     }
 
+    // Preview Photo
     let upFiles=[];
-    function upHandle(list){Array.from(list).forEach(f=>{if(!['image/png','image/jpeg'].includes(f.type)||f.size>5*1024*1024)return;upFiles.push(f);});upRender();}
-    function upRender(){const c=document.getElementById('up-prev'),p=document.getElementById('up-ph');c.innerHTML='';if(upFiles.length){p.style.display='none';upFiles.forEach((f,i)=>{const r=new FileReader();r.onload=e=>{const d=document.createElement('div');d.className='up-thumb';d.innerHTML=`<img src="${e.target.result}"><button type="button" class="up-remove" onclick="upRm(${i})"><svg width="8" height="8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>`;c.appendChild(d);};r.readAsDataURL(f);});}else{p.style.display='';}}
-    function upRm(i){upFiles.splice(i,1);upRender();}
-    function upOver(e){e.preventDefault();document.getElementById('up-zone').classList.add('drag-over');}
-    function upLeave(){document.getElementById('up-zone').classList.remove('drag-over');}
-    function upDrop(e){e.preventDefault();document.getElementById('up-zone').classList.remove('drag-over');upHandle(e.dataTransfer.files);}
+    function upHandle(list){
+        Array.from(list).forEach(f=>{
+            if(!['image/png','image/jpeg'].includes(f.type)||f.size>5*1024*1024) return;
+            upFiles = [f]; 
+        });
+        upRender();
+    }
+    function upRender(){
+        const c=document.getElementById('up-prev'), p=document.getElementById('up-ph');
+        c.innerHTML='';
+        if(upFiles.length){
+            p.style.display='none';
+            const f = upFiles[0];
+            const r=new FileReader();
+            r.onload=e=>{
+                const d=document.createElement('div');
+                d.className='up-thumb';
+                d.innerHTML=`<img src="${e.target.result}"><button type="button" class="up-remove" onclick="upRm(0)">×</button>`;
+                c.appendChild(d);
+            };
+            r.readAsDataURL(f);
+        } else {
+            p.style.display='';
+        }
+    }
+    function upRm(i){ upFiles=[]; upRender(); document.getElementById('up-input').value = ''; }
+    function upOver(e){ e.preventDefault(); document.getElementById('up-zone').classList.add('drag-over'); }
+    function upLeave(){ document.getElementById('up-zone').classList.remove('drag-over'); }
+    function upDrop(e){ e.preventDefault(); upLeave(); upHandle(e.dataTransfer.files); }
 </script>
 @endpush
