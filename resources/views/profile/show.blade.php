@@ -17,7 +17,7 @@
         gap: 16px;
     }
 
-    /* ── Card ── */
+    /* ── Card shell ── */
     .pf-card {
         background: #fff;
         border: 1px solid #ebebf0;
@@ -39,46 +39,23 @@
     }
     .pf-card-body { padding: 20px; }
 
-    /* ── Avatar + info ── */
-    .pf-identity {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
+    /* ── Avatar + identity ── */
+    .pf-identity { display: flex; align-items: center; gap: 16px; }
     .pf-avatar-lg {
-        width: 56px;
-        height: 56px;
+        width: 56px; height: 56px;
         border-radius: 50%;
         background: linear-gradient(135deg, #9025FB, #4617D3);
-        color: #fff;
-        font-size: 18px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        letter-spacing: -0.5px;
+        color: #fff; font-size: 18px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; letter-spacing: -0.5px;
     }
-    .pf-name {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1a1a2e;
-        line-height: 1.3;
-    }
-    .pf-role {
-        font-size: 12px;
-        color: #9ca3af;
-        margin-top: 2px;
-    }
+    .pf-name { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
+    .pf-role { font-size: 12px; color: #9ca3af; margin-top: 2px; }
     .pf-role span {
         display: inline-block;
-        background: #ede9fe;
-        color: #5b21b6;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 1px 8px;
-        border-radius: 4px;
-        margin-top: 4px;
+        background: #ede9fe; color: #5b21b6;
+        font-size: 11px; font-weight: 700;
+        padding: 1px 8px; border-radius: 4px; margin-top: 4px;
     }
 
     /* ── Info rows ── */
@@ -89,68 +66,44 @@
         justify-content: space-between;
         padding: 11px 0;
         border-bottom: 1px solid #f7f7f9;
+        gap: 12px;
     }
-    .pf-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .pf-row:last-child  { border-bottom: none; padding-bottom: 0; }
     .pf-row:first-child { padding-top: 0; }
-    .pf-row-label { font-size: 12.5px; color: #9ca3af; font-weight: 500; }
-    .pf-row-value { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+    .pf-row-label { font-size: 12.5px; color: #9ca3af; font-weight: 500; flex-shrink: 0; }
+    .pf-row-value { font-size: 13px; font-weight: 600; color: #1a1a2e; text-align: right; word-break: break-all; }
 
     /* ── Form fields ── */
-    .pf-field { margin-bottom: 14px; }
+    .pf-field         { margin-bottom: 14px; }
     .pf-field:last-child { margin-bottom: 0; }
     .pf-label {
-        display: block;
-        font-size: 12.5px;
-        font-weight: 700;
-        color: #374151;
-        margin-bottom: 6px;
+        display: block; font-size: 12.5px; font-weight: 700;
+        color: #374151; margin-bottom: 6px;
     }
     .pf-input-wrap { position: relative; }
     .pf-input {
-        width: 100%;
-        padding: 9px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        font-size: 13px;
-        font-family: 'Lato', sans-serif;
-        color: #111;
-        background: #fff;
-        outline: none;
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #e5e7eb; border-radius: 6px;
+        font-size: 13px; font-family: 'Lato', sans-serif;
+        color: #111; background: #fff; outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
     }
     .pf-input::placeholder { color: #d1d5db; }
-    .pf-input:focus {
-        border-color: #7c3aed;
-        box-shadow: 0 0 0 2px rgba(124,58,237,0.1);
-    }
+    .pf-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.1); }
     .pf-input.is-error { border-color: #f87171; }
 
-    /* Eye toggle */
+    /* ── Eye toggle button ── */
     .pf-eye {
-        position: absolute;
-        right: 10px;
-        top: 50%;
+        position: absolute; right: 10px; top: 50%;
         transform: translateY(-50%);
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #c4c4d4;
-        padding: 0;
-        line-height: 0;
+        background: none; border: none; cursor: pointer;
+        color: #c4c4d4; padding: 0; line-height: 0;
         transition: color 0.15s;
     }
     .pf-eye:hover { color: #7c3aed; }
 
-    .pf-hint {
-        font-size: 11.5px;
-        color: #9ca3af;
-        margin-top: 5px;
-    }
-    .pf-error {
-        font-size: 11.5px;
-        color: #dc2626;
-        margin-top: 4px;
-    }
+    .pf-hint  { font-size: 11.5px; color: #9ca3af; margin-top: 5px; }
+    .pf-error { font-size: 11.5px; color: #dc2626;  margin-top: 4px; }
 
     /* ── Buttons ── */
     .pf-btn-row {
@@ -160,56 +113,66 @@
         margin-top: 18px;
     }
     .pf-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 9px 20px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 700;
-        font-family: 'Lato', sans-serif;
-        cursor: pointer;
-        border: none;
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 9px 20px; border-radius: 6px;
+        font-size: 13px; font-weight: 700; font-family: 'Lato', sans-serif;
+        cursor: pointer; border: none;
         transition: opacity 0.15s, transform 0.15s;
         text-decoration: none;
     }
-    .pf-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .pf-btn:hover  { opacity: 0.88; transform: translateY(-1px); }
     .pf-btn:active { transform: translateY(0); }
 
     .pf-btn-primary {
         background: linear-gradient(135deg, #9025FB, #4617D3);
-        color: #fff;
-        box-shadow: 0 2px 8px rgba(109,40,217,0.2);
+        color: #fff; box-shadow: 0 2px 8px rgba(109,40,217,0.2);
     }
     .pf-btn-danger {
-        background: #fff;
-        color: #dc2626;
+        background: #fff; color: #dc2626;
         border: 1px solid #fecaca;
     }
     .pf-btn-danger:hover { background: #fef2f2; }
 
-    /* ── Alert boxes ── */
+    /* ── Alert banners ── */
     .pf-alert {
-        padding: 10px 14px;
-        border-radius: 6px;
-        font-size: 13px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        padding: 10px 14px; border-radius: 6px; font-size: 13px;
+        margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
     }
     .pf-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
-    .pf-alert-error   { background: #fef2f2; border: 1px solid #fecaca;  color: #dc2626; }
+    .pf-alert-error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
 
-    /* ── Logout section ── */
+    /* ── Logout row ── */
     .pf-logout-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
         padding: 4px 0;
     }
     .pf-logout-info { font-size: 13px; color: #6b7280; }
     .pf-logout-info strong { color: #1a1a2e; font-weight: 700; }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Mobile  < 768px : stack logout row, full-width save button
+       ▸ XS      < 480px : reduce card padding, smaller avatar
+    ══════════════════════════════════════════════ */
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .pf-card-body    { padding: 16px; }
+        .pf-btn-row      { justify-content: stretch; }
+        .pf-btn-row .pf-btn { width: 100%; justify-content: center; }
+        .pf-logout-row   { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .pf-avatar-lg { width: 44px; height: 44px; font-size: 14px; }
+        .pf-name      { font-size: 14px; }
+        .pf-card-body { padding: 12px; }
+    }
 </style>
 @endpush
 
@@ -294,7 +257,7 @@
                 @csrf
                 @method('PUT')
 
-                {{-- Current password --}}
+                {{-- ── Current password ── --}}
                 <div class="pf-field">
                     <label class="pf-label" for="current_password">Password Saat Ini</label>
                     <div class="pf-input-wrap">
@@ -314,7 +277,7 @@
                     @enderror
                 </div>
 
-                {{-- New password --}}
+                {{-- ── New password ── --}}
                 <div class="pf-field">
                     <label class="pf-label" for="new_password">Password Baru</label>
                     <div class="pf-input-wrap">
@@ -334,7 +297,7 @@
                     @enderror
                 </div>
 
-                {{-- Confirm new password --}}
+                {{-- ── Confirm new password ── --}}
                 <div class="pf-field">
                     <label class="pf-label" for="new_password_confirmation">Konfirmasi Password Baru</label>
                     <div class="pf-input-wrap">
@@ -389,6 +352,7 @@
 
 @push('scripts')
 <script>
+    // ── Toggle password field visibility ──
     function togglePw(id, btn) {
         const input = document.getElementById(id);
         const isHidden = input.type === 'password';

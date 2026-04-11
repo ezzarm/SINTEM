@@ -1,4 +1,4 @@
-    <?php
+<?php
 
     use Illuminate\Support\Facades\Route;
     use App\Http\Controllers\AuthController;
@@ -82,5 +82,35 @@
             Route::get('/anonim',              [AdminLaporanAnonimController::class, 'index'])       ->name('anonim');
             Route::patch('/anonim/{id}/status',[AdminLaporanAnonimController::class, 'updateStatus'])->name('anonim.status');
             Route::delete('/anonim/{id}',      [AdminLaporanAnonimController::class, 'destroy'])     ->name('anonim.destroy');
+        });
+    });
+
+    // ── SUPERADMIN PANEL ───────────────────────────────────────
+    Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+
+        // ── Accounts CRUD ──
+        Route::prefix('accounts')->name('accounts.')->group(function () {
+            Route::get('/',         [\App\Http\Controllers\Superadmin\AccountController::class, 'index']) ->name('index');
+            Route::get('/create',   [\App\Http\Controllers\Superadmin\AccountController::class, 'create'])->name('create');
+            Route::post('/',        [\App\Http\Controllers\Superadmin\AccountController::class, 'store']) ->name('store');
+            Route::get('/{id}/edit',[\App\Http\Controllers\Superadmin\AccountController::class, 'edit'])  ->name('edit');
+            Route::put('/{id}',     [\App\Http\Controllers\Superadmin\AccountController::class, 'update'])->name('update');
+            Route::delete('/{id}',  [\App\Http\Controllers\Superadmin\AccountController::class, 'destroy'])->name('destroy');
+        });
+
+        // ── Roles CRUD ──
+        Route::prefix('roles')->name('roles.')->group(function () {
+            Route::get('/',       [\App\Http\Controllers\Superadmin\RoleController::class, 'index'])  ->name('index');
+            Route::post('/',      [\App\Http\Controllers\Superadmin\RoleController::class, 'store'])  ->name('store');
+            Route::put('/{id}',   [\App\Http\Controllers\Superadmin\RoleController::class, 'update']) ->name('update');
+            Route::delete('/{id}',[\App\Http\Controllers\Superadmin\RoleController::class, 'destroy'])->name('destroy');
+        });
+
+        // ── Report Categories ──
+        Route::prefix('categories')->name('categories.')->group(function () {
+            Route::get('/',       [\App\Http\Controllers\Superadmin\CategoryController::class, 'index'])  ->name('index');
+            Route::post('/',      [\App\Http\Controllers\Superadmin\CategoryController::class, 'store'])  ->name('store');
+            Route::put('/{id}',   [\App\Http\Controllers\Superadmin\CategoryController::class, 'update']) ->name('update');
+            Route::delete('/{id}',[\App\Http\Controllers\Superadmin\CategoryController::class, 'destroy'])->name('destroy');
         });
     });

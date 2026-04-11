@@ -229,6 +229,37 @@
     .btn-cancel:hover { background:#f9f9fb; border-color:#c4b5fd; color:#4f28d9; }
     .btn-del-confirm { padding:8px 20px; background:#dc2626; color:#fff; font-size:13px; font-weight:700; font-family:'Lato',sans-serif; border:none; border-radius:6px; cursor:pointer; transition:opacity 0.15s; }
     .btn-del-confirm:hover { opacity:0.88; }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Tablet  768–1023px : reduce padding, horizontal scroll on table
+       ▸ Mobile  < 768px   : compact toolbar, full-width search
+       ▸ XS      < 480px   : hide less-critical columns
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet ── */
+    @media (max-width: 1023px) {
+        .adm-toolbar      { padding: 12px 20px 10px; }
+        .adm-table-wrap   { padding: 14px 20px 24px; overflow-x: auto; }
+        table             { min-width: 600px; }
+        .adm-pagination   { padding: 12px 20px; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .adm-toolbar      { padding: 10px 16px 8px; flex-wrap: wrap; gap: 8px; }
+        .adm-toolbar-left { flex-wrap: wrap; }
+        .adm-search       { width: 100%; }
+        .adm-search-wrap  { flex: 1; }
+        .adm-table-wrap   { padding: 10px 16px 20px; }
+        .adm-pagination   { padding: 10px 16px; flex-wrap: wrap; gap: 6px; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .adm-toolbar { flex-direction: column; align-items: stretch; }
+        table { min-width: 520px; }
+    }
 </style>
 @endpush
 
@@ -439,7 +470,7 @@
 
 @push('scripts')
 <script>
-    // ── Dropdown ──
+    /* ── Dropdown ── */
     function toggleDD(id) {
         document.querySelectorAll('.adm-dd').forEach(d => { if(d.id !== id) d.classList.remove('open'); });
         document.getElementById(id).classList.toggle('open');
@@ -478,7 +509,7 @@
         });
     }
 
-    // ── Detail panel ──
+    /* ── Detail panel ── */
     const statusMap   = {pending:'Menunggu', in_progress:'Diproses', solved:'Selesai'};
     const statusClass = {pending:'badge-pending', in_progress:'badge-in_progress', solved:'badge-solved'};
 
@@ -526,7 +557,7 @@
         document.getElementById('detailPanel').classList.remove('open');
     }
 
-    // ── Delete ──
+    /* ── Delete ── */
     function openDelete(id, ticket) {
         document.getElementById('delDesc').textContent = `Tiket ${ticket} akan dihapus permanen dan tidak bisa dikembalikan.`;
         document.getElementById('delForm').action = `/laporan/anonim/${id}`;

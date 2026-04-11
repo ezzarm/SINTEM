@@ -41,10 +41,17 @@ class AuthController extends Controller
     {
         $roleId = (int) Auth::user()->role_id;
 
+        // ── Superadmin goes to superadmin panel ──
+        if ($roleId === 1) {
+            return redirect()->route('superadmin.accounts.index');
+        }
+
+        // ── Regular user ──
         if ($roleId === 2) {
             return redirect()->route('pengumuman.index');
         }
 
+        // ── All other staff roles go to admin panel ──
         return redirect()->route('admin.pengumuman.index');
     }
 

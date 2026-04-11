@@ -207,6 +207,37 @@
     .btn-arc-cancel  { padding:8px 20px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#374151;font-size:13px;font-weight:700;font-family:'Lato',sans-serif;cursor:pointer; }
     .btn-arc-confirm { padding:8px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:13px;font-weight:700;font-family:'Lato',sans-serif;border:none;border-radius:6px;cursor:pointer;transition:opacity 0.15s; }
     .btn-arc-confirm:hover { opacity:0.88; }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Tablet  768–1023px : reduce padding, table horizontal scroll
+       ▸ Mobile  < 768px   : compact toolbar, full-width search
+       ▸ XS      < 480px   : stack toolbar
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet ── */
+    @media (max-width: 1023px) {
+        .adm-toolbar    { padding: 12px 20px 10px; }
+        .adm-table-wrap { padding: 14px 20px 24px; overflow-x: auto; }
+        table           { min-width: 620px; }
+        .adm-pagination { padding: 12px 20px; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .adm-toolbar      { padding: 10px 16px 8px; flex-wrap: wrap; gap: 8px; }
+        .adm-toolbar-left { flex-wrap: wrap; }
+        .adm-search       { width: 100%; }
+        .adm-search-wrap  { flex: 1; min-width: 0; }
+        .adm-table-wrap   { padding: 10px 16px 20px; }
+        .adm-pagination   { padding: 10px 16px; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .adm-toolbar { flex-direction: column; align-items: stretch; }
+        table        { min-width: 520px; }
+    }
 </style>
 @endpush
 
@@ -612,11 +643,11 @@
 
 @push('scripts')
 <script>
-    // ── Debounce ──
+    /* ── Debounce ── */
     let _st;
     function debounce(form) { clearTimeout(_st); _st=setTimeout(()=>form.submit(),500); }
 
-    // ── Auto-dismiss flash alert ──
+    /* ── Auto-dismiss flash alert ── */
     (function() {
         const alert = document.getElementById('flash-alert');
         if (alert) {
@@ -627,7 +658,7 @@
         }
     })();
 
-    // ── Dropdowns ──
+    /* ── Dropdowns ── */
     function toggleDd(id) {
         document.querySelectorAll('.adm-dd').forEach(d=>{ if(d.id!==id) d.classList.remove('open'); });
         document.getElementById(id).classList.toggle('open');
@@ -643,7 +674,7 @@
         if(!e.target.closest('.adm-dd')) document.querySelectorAll('.adm-dd').forEach(d=>d.classList.remove('open'));
     });
 
-    // ── Panel helpers ──
+    /* ── Panel helpers ── */
     function closePanels() {
         document.getElementById('panelOverlay').classList.remove('open');
         document.getElementById('editPanel').classList.remove('open');
@@ -680,7 +711,7 @@
         reader.readAsDataURL(input.files[0]);
     }
 
-    // ── Add Modal ──
+    /* ── Add Modal ── */
     function openAddModal() {
         document.getElementById('panelTitle').textContent='Tambah Event';
         document.getElementById('methodField').innerHTML='';
@@ -699,7 +730,7 @@
         document.getElementById('epBody').scrollTop=0;
     }
 
-    // ── Edit Panel ──
+    /* ── Edit Panel ── */
     function openEditPanel(data) {
         document.getElementById('panelTitle').textContent='Edit Event';
         document.getElementById('methodField').innerHTML='<input type="hidden" name="_method" value="PUT">';
@@ -726,7 +757,7 @@
         document.getElementById('eventForm').submit();
     }
 
-    // ── Delete ──
+    /* ── Delete ── */
     function confirmDelete(id,name) {
         document.getElementById('delDesc').textContent=`"${name}" akan dihapus permanen.`;
         document.getElementById('delForm').action=`/admin/kalender/${id}`;
@@ -734,7 +765,7 @@
     }
     function closeDelConfirm() { document.getElementById('delOverlay').classList.remove('open'); }
 
-    // ── Toggle ──
+    /* ── Toggle ── */
     function confirmToggle(id,name,isPublished) {
         document.getElementById('arcTitle').textContent=isPublished?'Arsipkan Kegiatan?':'Publish Kegiatan?';
         document.getElementById('arcDesc').textContent=isPublished?`"${name}" akan dijadikan draft.`:`"${name}" akan dipublish.`;
