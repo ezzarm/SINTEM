@@ -8,12 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --prefer-offline
 
-# Copy only what's needed for the asset build
 COPY resources/ resources/
 COPY vite.config.js ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
-# Tailwind 4.2 often needs public/ for scanning classes
 COPY public/ public/ 
 
 RUN npm run build
@@ -25,13 +23,9 @@ FROM composer:2.7 AS composer-builder
 
 WORKDIR /app
 
-# Copy dependency files
 COPY composer.json composer.lock ./
-
-# Copy the rest of the app (Required so 'artisan' exists for scripts)
 COPY . .
 
-# Run install with scripts enabled
 RUN composer install \
     --no-dev \
     --no-interaction \
@@ -44,7 +38,6 @@ RUN composer install \
 # ─────────────────────────────────────────────────────────────
 FROM php:8.3-fpm-alpine
 
-# Install system dependencies
 RUN apk add --no-cache \
     nginx \
     supervisor \
@@ -59,7 +52,6 @@ RUN apk add --no-cache \
     curl \
     libintl
 
-# Install PHP extensions
 RUN docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
@@ -74,7 +66,6 @@ RUN docker-php-ext-configure gd \
         bcmath \
         pcntl
 
-# Install Redis extension
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && pecl install redis \
     && docker-php-ext-enable redis \
@@ -82,24 +73,20 @@ RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
 
 WORKDIR /var/www/html
 
-# 1. Copy app source
 COPY . .
-
-# 2. Copy vendor from composer-builder (already optimized)
 COPY --from=composer-builder /app/vendor ./vendor
-
-# 3. Copy compiled assets from node-builder
 COPY --from=node-builder /app/public/build ./public/build
 
-# Config files
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/php.ini /usr/local/etc/php/conf.d/laravel.ini
-COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/nginx.conf       /etc/nginx/nginx.conf
+COPY docker/php.ini          /usr/local/etc/php/conf.d/laravel.ini
+COPY docker/php-fpm.conf     /usr/local/etc/php-fpm.d/www.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/entrypoint.sh    /entrypoint.sh
+# ↓ only change #1
+COPY docker/bootstrap.sh     /bootstrap.sh
 
-# Permissions and Directory Setup
-RUN chmod +x /entrypoint.sh artisan \
+# ↓ only change #2 — added /bootstrap.sh to chmod
+RUN chmod +x /entrypoint.sh /bootstrap.sh artisan \
  && mkdir -p storage/app/public \
              storage/framework/cache \
              storage/framework/sessions \
