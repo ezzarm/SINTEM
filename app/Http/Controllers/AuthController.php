@@ -5,9 +5,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    /**
+     * Max login attempts before lockout (per IP + identifier combo).
+     */
+    private const MAX_ATTEMPTS = 5;
+    private const DECAY_SECONDS = 60;
+
     public function showLogin()
     {
         if (Auth::check()) {
@@ -19,39 +27,55 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'nis'      => 'required|string',
-            'password' => 'required|string',
+            'nis'      => 'required|string|max:50',
+            'password' => 'required|string|max:100',
         ]);
 
+        // ── Rate limiting ─────────────────────────────────────────────────
+        $throttleKey = $this->throttleKey($request);
+
+        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()
+                ->withInput($request->only('nis'))
+                ->with('error', "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.");
+        }
+
+        // ── Attempt authentication ────────────────────────────────────────
         if (Auth::attempt([
             'identifier' => $request->nis,
             'password'   => $request->password,
             'status'     => 'active',
         ])) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
+
+            // Track last login timestamp
+            Auth::user()->update(['last_login' => now()]);
+
             return $this->redirectByRole();
         }
+
+        // ── Failed attempt ────────────────────────────────────────────────
+        RateLimiter::hit($throttleKey, self::DECAY_SECONDS);
 
         return back()
             ->withInput($request->only('nis'))
             ->with('error', 'NIS atau password salah. Silakan coba lagi.');
     }
 
-    private function redirectByRole()
+    private function redirectByRole(): \Illuminate\Http\RedirectResponse
     {
         $roleId = (int) Auth::user()->role_id;
 
-        // ── Superadmin goes to superadmin panel ──
         if ($roleId === 1) {
             return redirect()->route('superadmin.accounts.index');
         }
 
-        // ── Regular user ──
         if ($roleId === 2) {
             return redirect()->route('pengumuman.index');
         }
 
-        // ── All other staff roles go to admin panel ──
         return redirect()->route('admin.pengumuman.index');
     }
 
@@ -61,5 +85,10 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login');
+    }
+
+    private function throttleKey(Request $request): string
+    {
+        return Str::lower($request->input('nis')) . '|' . $request->ip();
     }
 }

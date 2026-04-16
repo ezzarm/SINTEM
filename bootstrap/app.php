@@ -12,9 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // ── Register superadmin route middleware alias ──
+
+        // ── Global middleware applied to every request ──
+        $middleware->append([
+            \App\Http\Middleware\SecurityHeadersMiddleware::class,
+        ]);
+
+        // ── Route middleware aliases ──
         $middleware->alias([
             'superadmin' => \App\Http\Middleware\SuperadminMiddleware::class,
+            'admin'      => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
