@@ -275,7 +275,7 @@
             <label class="form-label">Lampiran Pendukung <span style="font-weight:400;color:#9ca3af;font-size:12px;">(opsional)</span></label>
             <p style="font-size:12px;color:#6b7280;margin-bottom:8px;">Jika ada foto atau bukti pendukung, kamu bisa melampirkannya di sini. Ini bersifat opsional.</p>
             <div class="upload-zone" id="up-zone" ondragover="upOver(event)" ondragleave="upLeave()" ondrop="upDrop(event)">
-                <input type="file" name="photo" id="up-input" accept="image/png,image/jpeg" onchange="upHandle(this.files)">
+                <input type="file" name="photo" id="up-input" accept="image/*" onchange="upHandle(this.files)">
                 <div id="up-ph">
                     <div class="up-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:100%;height:100%"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div>
                     <div class="up-text">Seret gambar ke sini, atau</div>

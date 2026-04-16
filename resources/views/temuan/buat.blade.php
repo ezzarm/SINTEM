@@ -179,7 +179,7 @@
         <div class="form-group">
             <label class="form-label">Foto Barang</label>
             <div class="upload-zone" id="up-zone" ondragover="upOver(event)" ondragleave="upLeave()" ondrop="upDrop(event)">
-                <input type="file" name="photo" id="up-input" accept="image/png,image/jpeg" onchange="upHandle(this.files)">
+                <input type="file" name="photo" id="up-input" accept="image/*" style="display:none;">
                 <div id="up-ph">
                     <div class="up-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:100%;height:100%"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4"/></svg></div>
                     <div class="up-text">Klik atau tarik foto ke sini</div>
@@ -196,10 +196,123 @@
         </div>
     </form>
 </div>
+<div id="cameraModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#fff; width:100%; max-width:500px; border-radius:12px; overflow:hidden;">
+        <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <h4 style="margin:0; font-size:16px;">Ambil Foto Barang</h4>
+            <button type="button" onclick="closeCamera()" style="border:none; background:none; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+        <div style="padding:20px; text-align:center;">
+            <video id="webcamVideo" autoplay playsinline style="width:100%; border-radius:8px; background:#000; display:none;"></video>
+            <canvas id="photoCanvas" style="display:none;"></canvas>
+            
+            <div id="cameraPlaceholder" style="padding:40px 0; color:#666;">
+                <p>Klik tombol di bawah untuk mengaktifkan kamera laptop</p>
+            </div>
+        </div>
+        <div style="padding:15px; border-top:1px solid #eee; display:flex; gap:10px; justify-content:center;">
+            <button type="button" id="btnStartCamera" onclick="startCamera()" class="btn-unggah" style="background:#4f28d9;">Aktifkan Kamera</button>
+            <button type="button" id="btnCapture" onclick="takeSnapshot()" class="btn-unggah" style="display:none; background:#d97706;">Ambil Gambar</button>
+            <button type="button" id="btn-buka-folder" class="btn-batal">Buka Folder</button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+// 1. Deklarasi variabel di awal
+const upZone = document.getElementById('up-zone');
+const upInput = document.getElementById('up-input');
+
+// 2. Logika Klik (GANTIKAN KODE LAMA DENGAN INI)
+upZone.addEventListener('click', function(e) {
+    // 1. Jika klik tombol hapus foto, abaikan
+    if (e.target.classList.contains('up-remove')) return;
+
+    // 2. Deteksi perangkat
+    const isDesktop = !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isDesktop) {
+        // CEK: Jika yang diklik adalah input file itu sendiri (hasil trigger dari tombol modal)
+        // maka biarkan folder terbuka.
+        if (e.target === upInput) return;
+
+        // Selain itu, cegah buka folder dan munculkan modal
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('cameraModal').style.display = 'flex';
+    } else {
+        upInput.click();
+    }
+});
+
+// 3. Tambahkan trigger khusus untuk tombol di dalam modal
+document.getElementById('btn-buka-folder').addEventListener('click', function(e) {
+    e.stopPropagation(); // Agar tidak memicu modal lagi
+    closeCamera();       // Tutup modal dulu
+    upInput.click();     // Baru buka folder
+});
+
+// 3. Listener Perubahan File
+// Ini penting supaya saat pilih file via folder (di modal atau di HP), preview tetap muncul
+upInput.addEventListener('change', function() {
+    if (this.files && this.files.length > 0) {
+        upHandle(this.files);
+    }
+});
+
+let stream;
+
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('webcamVideo');
+        video.srcObject = stream;
+        video.style.display = 'block';
+        document.getElementById('cameraPlaceholder').style.display = 'none';
+        document.getElementById('btnStartCamera').style.display = 'none';
+        document.getElementById('btnCapture').style.display = 'inline-flex';
+    } catch (err) {
+        alert("Gagal mengakses kamera: " + err.message);
+    }
+}
+
+function takeSnapshot() {
+    const video = document.getElementById('webcamVideo');
+    const canvas = document.getElementById('photoCanvas');
+    const context = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+        const file = new File([blob], "capture_kamera.jpg", { type: "image/jpeg" });
+        
+        // 1. Update variabel array untuk preview UI
+        upFiles = [file];
+        upRender();
+
+        // 2. CRITICAL: Masukkan file ke dalam element input asli agar bisa di-submit form
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        document.getElementById('up-input').files = dataTransfer.files;
+
+        closeCamera();
+    }, 'image/jpeg');
+}
+
+function closeCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    document.getElementById('cameraModal').style.display = 'none';
+    document.getElementById('webcamVideo').style.display = 'none';
+    document.getElementById('cameraPlaceholder').style.display = 'block';
+    document.getElementById('btnStartCamera').style.display = 'inline-flex';
+    document.getElementById('btnCapture').style.display = 'none';
+}
     // ── Rich text editor: sync contenteditable → hidden textarea ──
     const editor = document.getElementById('tb-editor');
     const hiddenInput = document.getElementById('tb-hidden-desc');

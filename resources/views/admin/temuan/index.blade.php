@@ -970,41 +970,72 @@
     }
 
     /* ── Edit Panel ── */
-    function renderEpPhoto(url, containerId, formId, fieldName) {
-        const ctrl = document.getElementById(containerId);
-        if(url) {
-            ctrl.innerHTML=`<div class="ep-photo-wrap" style="border-radius:8px;"><img src="${url}" style="width:100%;height:130px;object-fit:cover;display:block;border-radius:8px;" onerror="this.style.display='none'"><label class="ep-photo-change-btn"><svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Ganti Foto<input type="file" name="${fieldName}" accept="image/*" onchange="handleEpPhoto(this,'${formId}')"></label></div>`;
-        } else {
-            ctrl.innerHTML=`<label class="ep-photo-upload-empty"><svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg><span style="font-size:12px;color:#9ca3af;font-family:'Lato',sans-serif;">Tambah foto barang</span><input type="file" name="${fieldName}" accept="image/*" onchange="handleEpPhoto(this,'${formId}')"></label>`;
-        }
+function renderEpPhoto(url, containerId, formId, fieldName) {
+    const ctrl = document.getElementById(containerId);
+    if(url) {
+        ctrl.innerHTML=`
+            <div class="ep-photo-wrap" style="border-radius:8px;">
+                <img src="${url}" style="width:100%;height:130px;object-fit:cover;display:block;border-radius:8px;" onerror="this.style.display='none'">
+                <label class="ep-photo-change-btn">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 
+                    Ganti Foto
+                    <input type="file" name="${fieldName}" id="bannerInputEdit" accept="image/*" onchange="handleEpPhoto(this,'${formId}')">
+                </label>
+            </div>`;
+    } else {
+        ctrl.innerHTML=`
+            <label class="ep-photo-upload-empty">
+                <svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span style="font-size:12px;color:#9ca3af;font-family:'Lato',sans-serif;">Tambah foto barang</span>
+                <input type="file" name="${fieldName}" id="bannerInputEdit" accept="image/*" onchange="handleEpPhoto(this,'${formId}')">
+            </label>`;
     }
+}
 
-    function handleEpPhoto(input, formId) {
-        if(!input.files||!input.files[0]) return;
-        const file=input.files[0];
-        const reader=new FileReader();
-        reader.onload=e=>{
-            const top=document.getElementById('epPhotoTop');
-            top.innerHTML=`<div class="ep-photo-wrap"><img class="ep-photo" src="${e.target.result}"><label class="ep-photo-change-btn">Ganti Foto<input type="file" name="photo" accept="image/*" onchange="handleEpPhoto(this,'${formId}')"></label></div>`;
-            renderEpPhoto(e.target.result,'epPhotoControl',formId,'photo');
-            const dt=new DataTransfer(); dt.items.add(file);
-            document.querySelectorAll(`#${formId} input[type=file][name=photo]`).forEach(el=>{try{el.files=dt.files;}catch(err){}});
-        };
-        reader.readAsDataURL(file);
-    }
+/* ── Handler Photo (Edit Panel) ── */
+function handleEpPhoto(input, formId) {
+    if(!input.files||!input.files[0]) return;
+    const file=input.files[0];
+    const reader=new FileReader();
+    reader.onload=e=>{
+        const top=document.getElementById('epPhotoTop');
+        top.innerHTML=`
+            <div class="ep-photo-wrap">
+                <img class="ep-photo" src="${e.target.result}">
+                <label class="ep-photo-change-btn">
+                    Ganti Foto
+                    <input type="file" name="photo" accept="image/*" onchange="handleEpPhoto(this,'${formId}')">
+                </label>
+            </div>`;
+        renderEpPhoto(e.target.result,'epPhotoControl',formId,'photo');
+        
+        const dt=new DataTransfer(); dt.items.add(file);
+        document.querySelectorAll(`#${formId} input[type=file][name=photo]`).forEach(el=>{try{el.files=dt.files;}catch(err){}});
+    };
+    reader.readAsDataURL(file);
+}
 
-    function handleAddPhoto(input) {
-        if(!input.files||!input.files[0]) return;
-        const file=input.files[0];
-        const reader=new FileReader();
-        reader.onload=e=>{
-            const top=document.getElementById('addPhotoTop');
-            top.innerHTML=`<div class="ep-photo-wrap"><img class="ep-photo" src="${e.target.result}"></div>`;
-            const ctrl=document.getElementById('addPhotoControl');
-            ctrl.innerHTML=`<div class="ep-photo-wrap" style="border-radius:8px;"><img src="${e.target.result}" style="width:100%;height:130px;object-fit:cover;display:block;border-radius:8px;"><label class="ep-photo-change-btn">Ganti Foto<input type="file" name="photo" accept="image/*" onchange="handleAddPhoto(this)"></label></div>`;
-        };
-        reader.readAsDataURL(file);
-    }
+/* ── Handler Photo (Add Panel) ── */
+function handleAddPhoto(input) {
+    if(!input.files||!input.files[0]) return;
+    const file=input.files[0];
+    const reader=new FileReader();
+    reader.onload=e=>{
+        const top=document.getElementById('addPhotoTop');
+        top.innerHTML=`<div class="ep-photo-wrap"><img class="ep-photo" src="${e.target.result}"></div>`;
+        
+        const ctrl=document.getElementById('addPhotoControl');
+        ctrl.innerHTML=`
+            <div class="ep-photo-wrap" style="border-radius:8px;">
+                <img src="${e.target.result}" style="width:100%;height:130px;object-fit:cover;display:block;border-radius:8px;">
+                <label class="ep-photo-change-btn">
+                    Ganti Foto
+                    <input type="file" name="photo" id="bannerInputAdd" accept="image/*" onchange="handleAddPhoto(this)">
+                </label>
+            </div>`;
+    };
+    reader.readAsDataURL(file);
+}
 
     function openEditPanel(data) {
         document.getElementById('epItemName').value = data.item_name ?? '';
@@ -1025,12 +1056,18 @@
         document.getElementById('epBody').scrollTop=0;
     }
 
-    function openAddPanel() {
-        document.getElementById('addPhotoTop').innerHTML='';
-        document.getElementById('addPhotoControl').innerHTML=`<label class="ep-photo-upload-empty"><svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg><span style="font-size:12px;color:#9ca3af;font-family:'Lato',sans-serif;">Tambah foto barang</span><input type="file" name="photo" accept="image/*" onchange="handleAddPhoto(this)"></label>`;
-        document.getElementById('addForm').reset();
-        openPanel('addPanel');
-    }
+  function openAddPanel() {
+    document.getElementById('addPhotoTop').innerHTML='';
+    // Pastikan di sini juga ada accept="image/*"
+    document.getElementById('addPhotoControl').innerHTML=`
+        <label class="ep-photo-upload-empty">
+            <svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span style="font-size:12px;color:#9ca3af;font-family:'Lato',sans-serif;">Tambah foto barang</span>
+            <input type="file" name="photo" id="bannerInput" accept="image/*" onchange="handleAddPhoto(this)">
+        </label>`;
+    document.getElementById('addForm').reset();
+    openPanel('addPanel');
+}
 
     /* ── Accept ── */
     function confirmAccept(id, name) {

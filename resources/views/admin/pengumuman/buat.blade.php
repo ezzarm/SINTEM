@@ -208,8 +208,7 @@
             <label class="form-label">Foto / Banner <span style="font-weight:400;color:#9ca3af;font-size:12px;">(opsional)</span></label>
             <label class="upload-zone" id="bannerZone" for="bannerInput"
                    ondragover="upOver(event)" ondragleave="upLeave(event)" ondrop="upDrop(event)">
-                <input type="file" name="photo" id="bannerInput" accept="image/png,image/jpeg,image/webp"
-                       onchange="upHandle(this.files)">
+                <input type="file" name="photo" id="bannerInput" accept="image/*" onchange="upHandle(this.files)">
                 <div id="bannerPh">
                     <div class="up-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:100%;height:100%">

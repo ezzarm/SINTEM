@@ -689,14 +689,27 @@
         }
     }
 
-    function renderPhotoControl(url) {
-        const ctrl=document.getElementById('epPhotoControl');
-        if(url) {
-            ctrl.innerHTML=`<div class="ep-photo-wrap" style="border-radius:8px;"><img src="${url}" style="width:100%;height:120px;object-fit:cover;display:block;border-radius:8px;" onerror="this.style.display='none'"><label class="ep-photo-change-btn"><svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Ganti Foto<input type="file" name="photo" accept="image/*" onchange="handlePhoto(this)"></label></div>`;
-        } else {
-            ctrl.innerHTML=`<label class="ep-photo-upload-empty"><svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg><span style="font-size:12px;color:#9ca3af;font-family:'Lato',sans-serif;">Tambah foto / banner</span><input type="file" name="photo" accept="image/*" onchange="handlePhoto(this)"></label>`;
-        }
+   function renderPhotoControl(url) {
+    const ctrl = document.getElementById('epPhotoControl');
+    if (url) {
+        ctrl.innerHTML = `
+            <div class="ep-photo-wrap" style="position:relative; border-radius:8px; overflow:hidden;">
+                <img src="${url}" style="width:100%; height:150px; object-fit:cover; display:block;">
+                <label class="ep-photo-change-btn" style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); color:#fff; padding:4px 12px; border-radius:20px; font-size:11px; cursor:pointer;">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:inline; margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 
+                    Ganti Foto
+                    <input type="file" name="photo" accept="image/*" onchange="handlePhoto(this)" style="display:none;">
+                </label>
+            </div>`;
+    } else {
+        ctrl.innerHTML = `
+            <label class="ep-photo-upload-empty" style="cursor:pointer;">
+                <svg width="22" height="22" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span style="font-size:12px; color:#9ca3af;">Tambah foto / banner</span>
+                <input type="file" name="photo" accept="image/*" onchange="handlePhoto(this)" style="display:none;">
+            </label>`;
     }
+}
 
     function handlePhoto(input) {
         if(!input.files||!input.files[0]) return;
