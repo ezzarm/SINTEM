@@ -1,13 +1,14 @@
 <?php
-// app/Models/User.php
 
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
+    use HasFactory;
+
     protected $table = 'users';
 
     public $timestamps = true;
@@ -22,9 +23,6 @@ class User extends Authenticatable
         'last_login',
     ];
 
-    /**
-     * Never expose these fields in JSON / API responses.
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -36,8 +34,7 @@ class User extends Authenticatable
         'last_login' => 'datetime',
     ];
 
-    // ── Custom auth identifier (NIS-based login) ──────────────────────────
-
+    // Custom auth identifier (NIS-based login)
     public function getAuthIdentifierName(): string
     {
         return 'identifier';
@@ -48,15 +45,13 @@ class User extends Authenticatable
         return $this->password;
     }
 
-    // ── Relationships ─────────────────────────────────────────────────────
-
+    // Relationships
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
-
+    // Helpers
     public function isActive(): bool
     {
         return $this->status === 'active';
