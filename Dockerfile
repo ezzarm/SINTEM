@@ -8,10 +8,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --prefer-offline
 
+# Copy only what's needed for the asset build
 COPY resources/ resources/
 COPY vite.config.js ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
+# Tailwind 4.2 often needs public/ for scanning classes
+COPY public/ public/ 
 
 RUN npm run build
 
@@ -22,7 +25,13 @@ FROM composer:2.7 AS composer-builder
 
 WORKDIR /app
 
+# Copy dependency files
 COPY composer.json composer.lock ./
+
+# Copy the rest of the app (Required so 'artisan' exists for scripts)
+COPY . .
+
+# Run install with scripts enabled
 RUN composer install \
     --no-dev \
     --no-interaction \
@@ -47,7 +56,8 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
-    curl
+    curl \
+    libintl
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd \
@@ -65,35 +75,32 @@ RUN docker-php-ext-configure gd \
         pcntl
 
 # Install Redis extension
-RUN pecl install redis && docker-php-ext-enable redis
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps
 
 WORKDIR /var/www/html
 
-# Copy app source (excluding .env, node_modules etc via .dockerignore)
+# 1. Copy app source
 COPY . .
 
-# Copy compiled assets from node-builder
-COPY --from=node-builder /app/public/build ./public/build
-
-# Copy vendor from composer-builder
+# 2. Copy vendor from composer-builder (already optimized)
 COPY --from=composer-builder /app/vendor ./vendor
 
-# Nginx config
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+# 3. Copy compiled assets from node-builder
+COPY --from=node-builder /app/public/build ./public/build
 
-# PHP config
+# Config files
+COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/laravel.ini
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
-
-# Supervisor config
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
-# Create all required directories including supervisor log dir
-RUN mkdir -p storage/app/public \
+# Permissions and Directory Setup
+RUN chmod +x /entrypoint.sh artisan \
+ && mkdir -p storage/app/public \
              storage/framework/cache \
              storage/framework/sessions \
              storage/framework/views \

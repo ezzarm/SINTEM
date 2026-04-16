@@ -1,48 +1,24 @@
 #!/bin/sh
 set -e
 
-echo "==> [entrypoint] Starting Sintem deployment..."
+echo "==> [entrypoint] Starting SINTEM deployment..."
 
+# Ensure we are in the right directory
 cd /var/www/html
 
-# ── 1. Write .env from Railway environment variables ─────────
-cat > .env << ENVEOF
-APP_NAME="${APP_NAME:-SINTEM}"
-APP_ENV="${APP_ENV:-production}"
-APP_KEY="${APP_KEY}"
-APP_DEBUG="${APP_DEBUG:-false}"
-APP_URL="${APP_URL:-http://localhost}"
-
-LOG_CHANNEL=stderr
-LOG_LEVEL=error
-
-DB_CONNECTION=mysql
-DB_HOST=${DB_HOST}
-DB_PORT=${DB_PORT:-3306}
-DB_DATABASE=${DB_DATABASE}
-DB_USERNAME=${DB_USERNAME}
-DB_PASSWORD=${DB_PASSWORD}
-
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
-
-CACHE_STORE=database
-QUEUE_CONNECTION=sync
-
-FILESYSTEM_DISK=local
-ENVEOF
-
-# ── 2. Generate app key if not set ──────────────────────────
+# ── 1. Check for APP_KEY ────────────────────────────────────
 if [ -z "$APP_KEY" ]; then
-    echo "==> [entrypoint] Generating APP_KEY..."
+    echo "WARNING: APP_KEY is not set. Generating a temporary one..."
     php artisan key:generate --force
 fi
 
-# ── 3. Wait for MySQL to be ready ───────────────────────────
-echo "==> [entrypoint] Waiting for MySQL at ${DB_HOST}:${DB_PORT:-3306}..."
+# ── 2. Wait for MySQL to be ready ───────────────────────────
+# Using a simpler check that doesn't strictly require mysqladmin if preferred, 
+# but mysqladmin is fine since we installed it.
+echo "==> [entrypoint] Waiting for MySQL at ${DB_HOST}..."
 max_tries=30
 count=0
-until mysqladmin ping -h"${DB_HOST}" -P"${DB_PORT:-3306}" -u"${DB_USERNAME}" -p"${DB_PASSWORD}" --silent 2>/dev/null; do
+while ! mysqladmin ping -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" --silent; do
     count=$((count + 1))
     if [ $count -ge $max_tries ]; then
         echo "ERROR: MySQL not reachable after ${max_tries} attempts. Exiting."
@@ -53,24 +29,27 @@ until mysqladmin ping -h"${DB_HOST}" -P"${DB_PORT:-3306}" -u"${DB_USERNAME}" -p"
 done
 echo "==> [entrypoint] MySQL is ready."
 
-# ── 4. Run migrations ───────────────────────────────────────
+# ── 3. Run migrations ───────────────────────────────────────
 echo "==> [entrypoint] Running migrations..."
+# --force is required in production
 php artisan migrate --force
 
-# ── 5. Clear & warm caches ──────────────────────────────────
+# ── 4. Optimise for Laravel 13 ──────────────────────────────
 echo "==> [entrypoint] Optimising caches..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+# Laravel 13/Vite optimization
+php artisan icons:cache 2>/dev/null || echo "No icons to cache"
 
-# ── 6. Storage link ─────────────────────────────────────────
-if [ ! -L public/storage ]; then
-    php artisan storage:link
-fi
+# ── 5. Storage link ─────────────────────────────────────────
+echo "==> [entrypoint] Linking storage..."
+php artisan storage:link --force
 
-# ── 7. Fix permissions ──────────────────────────────────────
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
+# ── 6. Final Permission Check ───────────────────────────────
+# Ensure the webserver can write to storage even if files were created by root
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-echo "==> [entrypoint] All done. Starting supervisor..."
+echo "==> [entrypoint] SINTEM is ready. Starting supervisor..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
