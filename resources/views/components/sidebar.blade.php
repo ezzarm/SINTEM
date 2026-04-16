@@ -127,7 +127,7 @@
     </div>
 
     {{-- ── USER PROFILE ── --}}
-    <a href="{{ route('profile.show') }}" class="sb-user">
+    <a href="{{ route('profile.show') }}" class="sb-user {{ request()->routeIs('profile.show') ? 'sb-user-active' : '' }}">
         <div class="sb-avatar-initial">
         {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
         {{ strtoupper(substr(strrchr(Auth::user()->name ?? '', ' '), 1, 1)) }}
@@ -335,6 +335,7 @@
         transition: background 0.15s, border-color 0.15s;
     }
     .sb-user:hover { background: #f4f0ff; border-color: #c4b5fd; }
+    .sb-user-active { background: #ede9fe !important; border-color: #c4b5fd !important; }
 
     .sb-avatar-initial {
         width: 34px;

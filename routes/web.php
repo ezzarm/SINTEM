@@ -48,6 +48,9 @@
     // ── ADMIN PANEL ────────────────────────────────────────────
     Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 
+        Route::get('/profile',          [ProfileController::class, 'show'])->name('profile.show');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
         // Pengumuman
         Route::prefix('pengumuman')->name('pengumuman.')->group(function () {
             Route::get('/',              [AdminPengumumanController::class, 'index'])->name('index');
@@ -87,6 +90,9 @@
 
     // ── SUPERADMIN PANEL ───────────────────────────────────────
     Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+
+        Route::get('/profile',          [ProfileController::class, 'show'])->name('profile.show');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
         // ── Accounts CRUD ──
         Route::prefix('accounts')->name('accounts.')->group(function () {

@@ -1,10 +1,7 @@
-{{-- resources/views/profile/show.blade.php --}}
-@extends('layouts.app')
+{{-- resources/views/superadmin/profile/show.blade.php --}}
+@extends('superadmin.layouts.app')
 
-@section('title', 'Profil – SINTEM')
-@section('topbar')
-    @include('components.topbar')
-@endsection
+@section('title', 'Profil – SINTEM Superadmin')
 
 @section('header', 'Profil Saya')
 @section('subheader', 'Informasi akun dan pengaturan keamanan')
@@ -19,6 +16,7 @@
         padding-bottom: 40px;
     }
 
+    /* ── Card shell ── */
     .pf-card {
         background: #fff;
         border: 1px solid #ebebf0;
@@ -32,9 +30,15 @@
         align-items: center;
         gap: 8px;
     }
-    .pf-card-title { font-size: 13px; font-weight: 700; color: #1a1a2e; letter-spacing: 0.01em; }
-    .pf-card-body  { padding: 20px; }
+    .pf-card-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1a1a2e;
+        letter-spacing: 0.01em;
+    }
+    .pf-card-body { padding: 20px; }
 
+    /* ── Avatar + identity ── */
     .pf-identity { display: flex; align-items: center; gap: 16px; }
     .pf-avatar-lg {
         width: 56px; height: 56px;
@@ -53,9 +57,11 @@
         padding: 1px 8px; border-radius: 4px; margin-top: 4px;
     }
 
+    /* ── Info rows ── */
     .pf-rows { display: flex; flex-direction: column; gap: 0; }
     .pf-row {
-        display: flex; align-items: center;
+        display: flex;
+        align-items: center;
         justify-content: space-between;
         padding: 11px 0;
         border-bottom: 1px solid #f7f7f9;
@@ -66,9 +72,13 @@
     .pf-row-label { font-size: 12.5px; color: #9ca3af; font-weight: 500; flex-shrink: 0; }
     .pf-row-value { font-size: 13px; font-weight: 600; color: #1a1a2e; text-align: right; word-break: break-all; }
 
+    /* ── Form fields ── */
     .pf-field         { margin-bottom: 14px; }
     .pf-field:last-child { margin-bottom: 0; }
-    .pf-label { display: block; font-size: 12.5px; font-weight: 700; color: #374151; margin-bottom: 6px; }
+    .pf-label {
+        display: block; font-size: 12.5px; font-weight: 700;
+        color: #374151; margin-bottom: 6px;
+    }
     .pf-input-wrap { position: relative; }
     .pf-input {
         width: 100%; padding: 9px 12px;
@@ -81,6 +91,7 @@
     .pf-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.1); }
     .pf-input.is-error { border-color: #f87171; }
 
+    /* ── Eye toggle button ── */
     .pf-eye {
         position: absolute; right: 10px; top: 50%;
         transform: translateY(-50%);
@@ -91,9 +102,15 @@
     .pf-eye:hover { color: #7c3aed; }
 
     .pf-hint  { font-size: 11.5px; color: #9ca3af; margin-top: 5px; }
-    .pf-error { font-size: 11.5px; color: #dc2626; margin-top: 4px; }
+    .pf-error { font-size: 11.5px; color: #dc2626;  margin-top: 4px; }
 
-    .pf-btn-row { display: flex; align-items: center; justify-content: flex-end; margin-top: 18px; }
+    /* ── Buttons ── */
+    .pf-btn-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 18px;
+    }
     .pf-btn {
         display: inline-flex; align-items: center; gap: 6px;
         padding: 9px 20px; border-radius: 6px;
@@ -104,25 +121,45 @@
     }
     .pf-btn:hover  { opacity: 0.88; transform: translateY(-1px); }
     .pf-btn:active { transform: translateY(0); }
-    .pf-btn-primary { background: linear-gradient(135deg, #9025FB, #4617D3); color: #fff; box-shadow: 0 2px 8px rgba(109,40,217,0.2); }
-    .pf-btn-danger  { background: #fff; color: #dc2626; border: 1px solid #fecaca; }
+
+    .pf-btn-primary {
+        background: linear-gradient(135deg, #9025FB, #4617D3);
+        color: #fff; box-shadow: 0 2px 8px rgba(109,40,217,0.2);
+    }
+    .pf-btn-danger {
+        background: #fff; color: #dc2626;
+        border: 1px solid #fecaca;
+    }
     .pf-btn-danger:hover { background: #fef2f2; }
 
-    .pf-alert { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    /* ── Alert banners ── */
+    .pf-alert {
+        padding: 10px 14px; border-radius: 6px; font-size: 13px;
+        display: flex; align-items: center; gap: 8px;
+    }
     .pf-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
     .pf-alert-error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
 
-    .pf-logout-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px 0; }
+    /* ── Logout row ── */
+    .pf-logout-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 4px 0;
+    }
     .pf-logout-info { font-size: 13px; color: #6b7280; }
     .pf-logout-info strong { color: #1a1a2e; font-weight: 700; }
 
     @media (max-width: 767px) {
-        .profile-wrap { padding: 14px 16px; }
-        .pf-card-body { padding: 16px; }
-        .pf-btn-row   { justify-content: stretch; }
+        .profile-wrap    { padding: 14px 16px; }
+        .pf-card-body    { padding: 16px; }
+        .pf-btn-row      { justify-content: stretch; }
         .pf-btn-row .pf-btn { width: 100%; justify-content: center; }
-        .pf-logout-row { flex-direction: column; align-items: flex-start; }
+        .pf-logout-row   { flex-direction: column; align-items: flex-start; }
     }
+
     @media (max-width: 479px) {
         .pf-avatar-lg { width: 44px; height: 44px; font-size: 14px; }
         .pf-name      { font-size: 14px; }
@@ -134,6 +171,7 @@
 @section('content')
 <div class="profile-wrap">
 
+    {{-- ── Success / Error alerts ── --}}
     @if(session('success'))
     <div class="pf-alert pf-alert-success">
         <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +207,7 @@
                 <div>
                     <div class="pf-name">{{ Auth::user()->name }}</div>
                     <div class="pf-role">
-                        <span>{{ Auth::user()->role->role_name ?? 'User' }}</span>
+                        <span>{{ Auth::user()->role->role_name ?? 'superadmin' }}</span>
                     </div>
                 </div>
             </div>
@@ -207,7 +245,7 @@
             <span class="pf-card-title">Ganti Password</span>
         </div>
         <div class="pf-card-body">
-            <form method="POST" action="{{ route('profile.password') }}">
+            <form method="POST" action="{{ route('superadmin.profile.password') }}">
                 @csrf
                 @method('PUT')
 
@@ -225,7 +263,9 @@
                             </svg>
                         </button>
                     </div>
-                    @error('current_password')<p class="pf-error">{{ $message }}</p>@enderror
+                    @error('current_password')
+                    <p class="pf-error">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="pf-field">
@@ -242,7 +282,9 @@
                             </svg>
                         </button>
                     </div>
-                    @error('new_password')<p class="pf-error">{{ $message }}</p>@enderror
+                    @error('new_password')
+                    <p class="pf-error">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="pf-field">
