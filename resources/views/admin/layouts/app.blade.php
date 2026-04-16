@@ -63,7 +63,7 @@
             min-height: 0;
             padding: 0;
             background: #ffffff;
-            overflow: hidden;
+            overflow-y: auto;
             width: 100%;
             display: flex;
             flex-direction: column;

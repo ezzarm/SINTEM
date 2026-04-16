@@ -11,6 +11,28 @@ class ProfileController extends Controller
 {
     public function show()
     {
+        $roleId = (int) Auth::user()->role_id;
+
+        // Kalau sudah di URL yang benar, tampilkan view-nya
+        $path = request()->path();
+
+        if ($roleId === 1) {
+            // Superadmin harus di /superadmin/profile
+            if (!str_starts_with($path, 'superadmin/profile')) {
+                return redirect()->route('superadmin.profile.show');
+            }
+            return view('superadmin.profile.show');
+        }
+
+        if ($roleId !== 2) {
+            // Admin harus di /admin/profile
+            if (!str_starts_with($path, 'admin/profile')) {
+                return redirect()->route('admin.profile.show');
+            }
+            return view('admin.profile.show');
+        }
+
+        // User biasa — /profile
         return view('profile.show');
     }
 

@@ -77,7 +77,7 @@
     </nav>
 
     {{-- ── USER PROFILE ── --}}
-    <a href="{{ route('profile.show') }}" class="sb-user">
+    <a href="{{ route('admin.profile.show') }}" class="sb-user">
         <div class="sb-avatar-initial">
             {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}{{ strtoupper(substr(strrchr(Auth::user()->name ?? '', ' '), 1, 1)) }}
         </div>
