@@ -10,7 +10,7 @@ return new class extends Migration
     {
         // announcements (FK ke users)
         Schema::create('announcements', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->unsignedInteger('id')->autoIncrement();
             $table->string('title', 255)->comment('Short headline of the announcement');
             $table->text('content')->comment('Full body text of the announcement');
             $table->tinyInteger('is_published')->default(1)->comment('1 = visible to users; 0 = draft/hidden');
@@ -26,10 +26,10 @@ return new class extends Migration
 
         // events (FK ke event_categories, event_locations, users)
         Schema::create('events', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->unsignedInteger('id')->autoIncrement();
             $table->string('event_name', 255)->comment('Name/title of the event');
-            $table->integer('category_id')->unsigned()->comment('References event_categories.id');
-            $table->integer('location_id')->unsigned()->nullable()->comment('References event_locations.id');
+            $table->unsignedInteger('category_id')->comment('References event_categories.id');
+            $table->unsignedInteger('location_id')->nullable()->comment('References event_locations.id');
             $table->date('event_date')->comment('Start date of the event');
             $table->date('event_date_end')->nullable()->comment('End date for multi-day events; NULL means single-day');
             $table->text('description')->nullable()->comment('Detailed description or agenda of the event');
@@ -53,12 +53,12 @@ return new class extends Migration
 
         // anonymous_reports (FK ke report_categories)
         Schema::create('anonymous_reports', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->unsignedInteger('id')->autoIncrement();
             $table->string('ticket_number', 20)->unique('uq_anonymous_reports_ticket')->comment('Unique public-facing code (e.g. TKT-001)');
-            $table->integer('category_id')->unsigned()->comment('References report_categories.id');
+            $table->unsignedInteger('category_id')->comment('References report_categories.id');
             $table->text('report_content')->comment('The full text of the anonymous report');
             $table->text('admin_notes')->nullable()->comment('Internal notes added by staff');
-            $table->enum('status', ['pending', 'in_progress', 'solved'])->default('pending')->comment('pending = not yet reviewed; in_progress = being handled; solved = case closed');
+            $table->enum('status', ['pending', 'in_progress', 'solved'])->default('pending');
             $table->timestamp('resolved_at')->nullable()->comment('Timestamp when the report was marked as solved');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
@@ -71,9 +71,9 @@ return new class extends Migration
 
         // attachments (FK ke users)
         Schema::create('attachments', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->unsignedInteger('id')->autoIncrement();
             $table->enum('source_type', ['announcement', 'event'])->comment('Only announcements and events support attachments');
-            $table->integer('source_id')->unsigned()->comment('Primary key of the parent announcement or event');
+            $table->unsignedInteger('source_id')->comment('Primary key of the parent announcement or event');
             $table->enum('attachment_type', ['file', 'link'])->comment('file = uploaded document; link = external URL');
             $table->string('file_name', 255)->nullable()->comment('Original filename');
             $table->text('file_path')->nullable()->comment('Relative storage path');
@@ -95,9 +95,9 @@ return new class extends Migration
 
         // photos (FK ke users)
         Schema::create('photos', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->unsignedInteger('id')->autoIncrement();
             $table->enum('source_type', ['announcement', 'event', 'lost_found', 'anonymous_report'])->comment('Parent entity type this photo belongs to');
-            $table->integer('source_id')->unsigned()->comment('Primary key of the parent entity row');
+            $table->unsignedInteger('source_id')->comment('Primary key of the parent entity row');
             $table->string('file_name', 255)->comment('Original filename as uploaded');
             $table->text('file_path')->comment('Relative storage path');
             $table->string('file_type', 100)->comment('MIME type');
@@ -114,7 +114,7 @@ return new class extends Migration
 
         // notifications (FK ke users)
         Schema::create('notifications', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->unsignedInteger('id')->autoIncrement();
             $table->unsignedInteger('user_id')->comment('Recipient user ID');
             $table->string('title', 255)->comment('Short notification headline');
             $table->text('body')->nullable()->comment('Full notification message');
