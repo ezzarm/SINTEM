@@ -10,7 +10,7 @@ return new class extends Migration
     {
         // 1. roles (tidak ada FK, harus dibuat pertama)
         Schema::create('roles', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement();
+            $table->increments('id'); 
             $table->string('role_name', 50)->unique()->comment('Unique name for the role (e.g. superadmin, BK, TU)');
             $table->string('description', 255)->nullable()->comment('Human-readable explanation of the role responsibilities');
             $table->timestamp('created_at')->nullable()->useCurrent();
