@@ -13,7 +13,7 @@ return new class extends Migration
             $table->integer('id')->autoIncrement();
             $table->string('category_name', 100)->comment('Display name of the report category');
             $table->string('description', 255)->nullable()->comment('What kind of issues belong in this category');
-            $table->integer('responsible_role_id')->unsigned()->comment('Role ID of the staff responsible for reviewing these reports');
+            $table->unsignedInteger('responsible_role_id')->comment('Role ID of the staff responsible for reviewing these reports');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
 

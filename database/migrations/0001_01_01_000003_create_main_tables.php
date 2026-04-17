@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('title', 255)->comment('Short headline of the announcement');
             $table->text('content')->comment('Full body text of the announcement');
             $table->tinyInteger('is_published')->default(1)->comment('1 = visible to users; 0 = draft/hidden');
-            $table->integer('created_by')->unsigned()->comment('User ID of the staff member who created this announcement');
+            $table->unsignedInteger('created_by')->comment('User ID of the staff member who created this announcement');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
 
@@ -34,7 +34,7 @@ return new class extends Migration
             $table->date('event_date_end')->nullable()->comment('End date for multi-day events; NULL means single-day');
             $table->text('description')->nullable()->comment('Detailed description or agenda of the event');
             $table->tinyInteger('is_published')->default(1)->comment('1 = visible to users; 0 = draft/hidden');
-            $table->integer('created_by')->unsigned()->comment('User ID of the staff member who created this event');
+            $table->unsignedInteger('created_by')->comment('User ID of the staff member who created this event');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
 
@@ -82,7 +82,7 @@ return new class extends Migration
             $table->text('link_url')->nullable()->comment('Full URL for external link attachments');
             $table->string('link_label', 255)->nullable()->comment('Human-friendly display label for the link');
             $table->string('label', 255)->nullable()->comment('Optional short description of what this attachment is');
-            $table->integer('uploaded_by')->unsigned()->nullable()->comment('User ID who added this attachment');
+            $table->unsignedInteger('uploaded_by')->nullable()->comment('User ID who added this attachment');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
 
@@ -102,7 +102,7 @@ return new class extends Migration
             $table->text('file_path')->comment('Relative storage path');
             $table->string('file_type', 100)->comment('MIME type');
             $table->integer('file_size')->comment('File size in bytes');
-            $table->integer('uploaded_by')->unsigned()->nullable()->comment('User who uploaded; NULL for anonymous report photos');
+            $table->unsignedInteger('uploaded_by')->nullable()->comment('User who uploaded; NULL for anonymous report photos');
             $table->timestamp('created_at')->nullable()->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
 
@@ -115,7 +115,7 @@ return new class extends Migration
         // notifications (FK ke users)
         Schema::create('notifications', function (Blueprint $table) {
             $table->integer('id')->autoIncrement();
-            $table->integer('user_id')->unsigned()->comment('Recipient user ID');
+            $table->unsignedInteger('user_id')->comment('Recipient user ID');
             $table->string('title', 255)->comment('Short notification headline');
             $table->text('body')->nullable()->comment('Full notification message');
             $table->string('type', 50)->comment('Category of notification (e.g. report_update, announcement, lost_found)');
@@ -133,7 +133,7 @@ return new class extends Migration
         // audit_logs (FK ke users)
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->integer('user_id')->unsigned()->nullable()->comment('User who performed the action (NULL for system/unauthenticated actions)');
+            $table->unsignedInteger('user_id')->nullable()->comment('User who performed the action (NULL for system/unauthenticated actions)');
             $table->string('action', 100)->comment('Action performed (e.g. create, update, delete, login, logout)');
             $table->string('table_name', 100)->nullable()->comment('Database table affected by the action');
             $table->integer('record_id')->nullable()->comment('Primary key of the affected record');
