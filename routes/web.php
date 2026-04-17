@@ -139,3 +139,18 @@ Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmi
         Route::delete('/{id}',[\App\Http\Controllers\Superadmin\CategoryController::class, 'destroy'])->name('destroy');
     });
 });
+
+Route::post('/debug-login', function (\Illuminate\Http\Request $request) {
+    $result = \Illuminate\Support\Facades\Auth::attempt([
+        'identifier' => $request->nis,
+        'password'   => $request->password,
+        'status'     => 'active',
+    ]);
+
+    return response()->json([
+        'attempt_result' => $result,
+        'auth_check'     => auth()->check(),
+        'user'           => auth()->user(),
+        'session_all'    => session()->all(),
+    ]);
+});
