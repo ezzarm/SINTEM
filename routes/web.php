@@ -25,13 +25,16 @@ Route::get('/forgot-password', function () {
 
 Route::get('/debug-session', function () {
     return response()->json([
-        'auth'      => auth()->check(),
-        'user'      => auth()->user(),
-        'session'   => session()->all(),
-        'driver'    => config('session.driver'),
-        'secure'    => config('session.secure'),
+        'auth'           => auth()->check(),
+        'user'           => auth()->user(),
+        'session_id'     => session()->getId(),
+        'session_all'    => session()->all(),
+        'session_driver' => config('session.driver'),
+        'session_secure' => config('session.secure'),
+        'session_domain' => config('session.domain'),
+        'app_url'        => config('app.url'),
     ]);
-})->middleware('auth');
+});
 
 // ── USER PANEL ─────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
