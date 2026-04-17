@@ -10,7 +10,7 @@ class User extends Authenticatable
     use HasFactory;
 
     protected $table = 'users';
-
+    protected $rememberTokenName = null;
     public $timestamps = true;
 
     protected $fillable = [
