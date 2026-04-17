@@ -23,6 +23,16 @@ Route::get('/forgot-password', function () {
     return view('auth.forgot-password');
 })->name('password.request');
 
+Route::get('/debug-session', function () {
+    return response()->json([
+        'auth'      => auth()->check(),
+        'user'      => auth()->user(),
+        'session'   => session()->all(),
+        'driver'    => config('session.driver'),
+        'secure'    => config('session.secure'),
+    ]);
+})->middleware('auth');
+
 // ── USER PANEL ─────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
 
