@@ -10,9 +10,6 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    /**
-     * Max login attempts before lockout (per IP + identifier combo).
-     */
     private const MAX_ATTEMPTS = 5;
     private const DECAY_SECONDS = 60;
 
@@ -26,42 +23,45 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            'nis'      => 'required|string|max:50',
-            'password' => 'required|string|max:100',
-        ]);
+        try {
+            $request->validate([
+                'nis'      => 'required|string|max:50',
+                'password' => 'required|string|max:100',
+            ]);
 
-        // ── Rate limiting ─────────────────────────────────────────────────
-        $throttleKey = $this->throttleKey($request);
+            $throttleKey = $this->throttleKey($request);
 
-        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
-            $seconds = RateLimiter::availableIn($throttleKey);
+            if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
+                $seconds = RateLimiter::availableIn($throttleKey);
+                return back()
+                    ->withInput($request->only('nis'))
+                    ->with('error', "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.");
+            }
+
+            if (Auth::attempt([
+                'identifier' => $request->nis,
+                'password'   => $request->password,
+                'status'     => 'active',
+            ])) {
+                RateLimiter::clear($throttleKey);
+                $request->session()->regenerate();
+                Auth::user()->update(['last_login' => now()]);
+                return $this->redirectByRole();
+            }
+
+            RateLimiter::hit($throttleKey, self::DECAY_SECONDS);
+
             return back()
                 ->withInput($request->only('nis'))
-                ->with('error', "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.");
+                ->with('error', 'NIS atau password salah. Silakan coba lagi.');
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+            ], 500);
         }
-
-        // ── Attempt authentication ────────────────────────────────────────
-        if (Auth::attempt([
-            'identifier' => $request->nis,
-            'password'   => $request->password,
-            'status'     => 'active',
-        ])) {
-            RateLimiter::clear($throttleKey);
-            $request->session()->regenerate();
-
-            // Track last login timestamp
-            Auth::user()->update(['last_login' => now()]);
-
-            return $this->redirectByRole();
-        }
-
-        // ── Failed attempt ────────────────────────────────────────────────
-        RateLimiter::hit($throttleKey, self::DECAY_SECONDS);
-
-        return back()
-            ->withInput($request->only('nis'))
-            ->with('error', 'NIS atau password salah. Silakan coba lagi.');
     }
 
     private function redirectByRole(): \Illuminate\Http\RedirectResponse
