@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
 
+        $middleware->trustProxies(at: '*'); 
+        
         // ── Global middleware applied to every request ──
         $middleware->append([
             \App\Http\Middleware\SecurityHeadersMiddleware::class,
