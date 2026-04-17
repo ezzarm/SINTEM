@@ -6,7 +6,7 @@ cd /var/www/html
 echo "==> [bootstrap] Waiting for MySQL at ${DB_HOST}..."
 max_tries=40
 count=0
-while ! mysqladmin ping -h"$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" --silent 2>/dev/null; do
+while ! mysqladmin ping -h"$DB_HOST" -P"${DB_PORT:-3306}" -u"$DB_USERNAME" -p"$DB_PASSWORD" --silent 2>/dev/null; do
     count=$((count + 1))
     if [ $count -ge $max_tries ]; then
         echo "ERROR: MySQL not reachable after ${max_tries} attempts. Exiting."
@@ -21,18 +21,26 @@ echo "==> [bootstrap] MySQL is ready."
 echo "==> [bootstrap] Running migrations..."
 php artisan migrate --force
 
-# ── 3. Optimise caches ─────────────────────────────────────
+# ── 3. Seed only on first deploy (users table empty) ────────
+USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1)
+if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
+    echo "==> [bootstrap] Seeding initial data..."
+    php artisan db:seed --force
+else
+    echo "==> [bootstrap] Database already seeded, skipping."
+fi
+
+# ── 4. Optimise caches ──────────────────────────────────────
 echo "==> [bootstrap] Optimising caches..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-php artisan icons:cache 2>/dev/null || echo "No icons to cache"
 
-# ── 4. Storage link ─────────────────────────────────────────
+# ── 5. Storage link ─────────────────────────────────────────
 echo "==> [bootstrap] Linking storage..."
 php artisan storage:link --force 2>/dev/null || true
 
-# ── 5. Fix permissions post-cache ───────────────────────────
+# ── 6. Fix permissions post-cache ───────────────────────────
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
