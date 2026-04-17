@@ -43,8 +43,8 @@ class AuthController extends Controller
             'status'     => 'active',
         ])) {
             RateLimiter::clear($throttleKey);
-            $request->session()->regenerate();
             Auth::user()->update(['last_login' => now()]);
+            $request->session()->regenerate();
             return $this->redirectByRole();
         }
 
