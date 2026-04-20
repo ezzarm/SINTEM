@@ -43,14 +43,16 @@ class LaporanController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('upload/photos/reports', 'public');
+            $file   = $request->file('photo');
+            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
             DB::table('photos')->insert([
                 'source_type' => 'anonymous_report',
                 'source_id'   => $reportId,
-                'file_name'   => $request->file('photo')->getClientOriginalName(),
-                'file_path'   => $path,
-                'file_type'   => $request->file('photo')->getMimeType(),
-                'file_size'   => $request->file('photo')->getSize(),
+                'file_name'   => $file->getClientOriginalName(),
+                'file_path'   => '',
+                'file_data'   => $base64,
+                'file_type'   => $file->getMimeType(),
+                'file_size'   => $file->getSize(),
                 'uploaded_by' => null,
                 'created_at'  => now(),
                 'updated_at'  => now(),
@@ -176,14 +178,16 @@ class LaporanController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('upload/photos/lost_founds', 'public');
+            $file   = $request->file('photo');
+            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
             DB::table('photos')->insert([
                 'source_type' => 'lost_found',
                 'source_id'   => $reportId,
-                'file_name'   => $request->file('photo')->getClientOriginalName(),
-                'file_path'   => $path,
-                'file_type'   => $request->file('photo')->getMimeType(),
-                'file_size'   => $request->file('photo')->getSize(),
+                'file_name'   => $file->getClientOriginalName(),
+                'file_path'   => '',
+                'file_data'   => $base64,
+                'file_type'   => $file->getMimeType(),
+                'file_size'   => $file->getSize(),
                 'uploaded_by' => Auth::id(),
                 'created_at'  => now(),
                 'updated_at'  => now(),
@@ -223,20 +227,21 @@ class LaporanController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            // Hapus data foto lama di DB (File fisik di storage bisa dihapus manual jika perlu)
             DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->where('source_id', $id)
                 ->delete();
 
-            $path = $request->file('photo')->store('upload/photos/lost_founds', 'public');
+            $file   = $request->file('photo');
+            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
             DB::table('photos')->insert([
                 'source_type' => 'lost_found',
                 'source_id'   => $id,
-                'file_name'   => $request->file('photo')->getClientOriginalName(),
-                'file_path'   => $path,
-                'file_type'   => $request->file('photo')->getMimeType(),
-                'file_size'   => $request->file('photo')->getSize(),
+                'file_name'   => $file->getClientOriginalName(),
+                'file_path'   => '',
+                'file_data'   => $base64,
+                'file_type'   => $file->getMimeType(),
+                'file_size'   => $file->getSize(),
                 'uploaded_by' => Auth::id(),
                 'created_at'  => now(),
                 'updated_at'  => now(),
