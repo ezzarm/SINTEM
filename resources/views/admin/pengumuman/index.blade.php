@@ -425,7 +425,9 @@
                                         'content'      => $item->content,
                                         'is_published' => $item->is_published,
                                         'photo'        => optional($item->photos->first())->file_path
-                                                            ? asset('storage/' . $item->photos->first()->file_path)
+                                                            ? (str_starts_with($item->photos->first()->file_path, 'data:')
+                                                                ? $item->photos->first()->file_path
+                                                                : asset('storage/' . $item->photos->first()->file_path))
                                                             : null,
                                     ]) }})">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,7 +489,12 @@
     {{-- CARD VIEW (mobile/narrow) --}}
     <div class="cards-wrap">
         @forelse($items as $i => $item)
-        @php $photo = optional($item->photos->first())->file_path ? asset('storage/'.$item->photos->first()->file_path) : null; @endphp
+        @php
+            $rawPath = optional($item->photos->first())->file_path;
+            $photo = $rawPath
+                ? (str_starts_with($rawPath, 'data:') ? $rawPath : asset('storage/'.$rawPath))
+                : null;
+        @endphp
         <div class="item-card">
             @if($photo)
             <img class="card-photo" src="{{ $photo }}" alt="{{ $item->title }}" onerror="this.style.display='none'">
