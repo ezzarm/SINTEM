@@ -25,13 +25,13 @@
             overflow: hidden;
         }
 
+        /* ── Decorative background layers ── */
         .bg-layer {
             position: fixed;
             inset: 0;
             pointer-events: none;
             z-index: 0;
         }
-
         .bg-layer::before {
             content: '';
             position: absolute; inset: 0;
@@ -55,7 +55,7 @@
             66%  { transform: translate(-5px, 6px); }
         }
 
-        /* Grid lines */
+        /* ── Grid lines ── */
         .grid-pattern {
             position: fixed; inset: 0;
             background-image:
@@ -67,7 +67,7 @@
             mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black 0%, transparent 100%);
         }
 
-        /* Falling shapes canvas */
+        /* ── Falling shapes canvas ── */
         #falling-canvas {
             position: fixed;
             inset: 0;
@@ -76,7 +76,7 @@
             z-index: 0;
         }
 
-        /* ── ALL CONTENT above bg ── */
+        /* ── All foreground content above bg ── */
         .back-btn, .page-wrap { position: relative; z-index: 10; }
 
         @keyframes slideUp {
@@ -84,6 +84,7 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
+        /* ── Back button ── */
         .back-btn {
             position: fixed;
             top: 20px;
@@ -112,6 +113,7 @@
             transform: translateX(-2px);
         }
 
+        /* ── Page wrapper ── */
         .page-wrap {
             display: flex;
             flex-direction: column;
@@ -120,6 +122,7 @@
             padding: 24px 16px;
         }
 
+        /* ── Logo area ── */
         .logo-area {
             display: flex;
             flex-direction: column;
@@ -138,8 +141,10 @@
             font-weight: 900;
             color: #1a1a2e;
             letter-spacing: -0.2px;
+            text-align: center;
         }
 
+        /* ── Login card ── */
         .card {
             width: 100%;
             max-width: 400px;
@@ -150,7 +155,6 @@
             opacity: 0;
             animation: slideUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.22s forwards;
         }
-
         .card-title {
             font-size: 16px;
             font-weight: 900;
@@ -165,6 +169,7 @@
             line-height: 1.5;
         }
 
+        /* ── Form fields ── */
         .field-label {
             display: block;
             font-size: 13px;
@@ -202,6 +207,7 @@
             box-shadow: 0 0 0 3px rgba(109,40,217,0.10);
         }
 
+        /* ── Password visibility toggle ── */
         .pw-wrap { position: relative; }
         .pw-toggle {
             position: absolute;
@@ -218,6 +224,7 @@
         }
         .pw-toggle:hover { color: #6d28d9; }
 
+        /* ── Submit button ── */
         .btn-continue {
             display: block;
             width: 100%;
@@ -240,9 +247,10 @@
             box-shadow: 0 6px 20px rgba(79,40,217,0.28);
             transform: translateY(-1px);
         }
-        .btn-continue:active { transform: translateY(0); box-shadow: none; }
+        .btn-continue:active   { transform: translateY(0); box-shadow: none; }
         .btn-continue:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
+        /* ── Forgot password link ── */
         .forgot-wrap {
             text-align: center;
             margin-top: 16px;
@@ -258,6 +266,7 @@
         }
         .forgot-link:hover { color: #4f28d9; }
 
+        /* ── Error boxes ── */
         .error-box {
             background: #fef2f2;
             border: 1px solid #fecaca;
@@ -275,6 +284,28 @@
             color: #dc2626;
             margin-top: 4px;
         }
+
+        /* ══════════════════════════════════════════════
+           BREAKPOINTS
+           ▸ Mobile   < 768px : smaller logo, tighter card padding
+           ▸ XS       < 480px : full-width card, no side padding on card
+        ══════════════════════════════════════════════ */
+
+        /* ── Mobile ── */
+        @media (max-width: 767px) {
+            .logo-img       { height: 44px; }
+            .welcome-title  { font-size: 16px; }
+            .card           { padding: 22px 18px 20px; }
+            .back-btn       { top: 14px; left: 14px; padding: 7px 12px; font-size: 12px; }
+        }
+
+        /* ── Small mobile ── */
+        @media (max-width: 479px) {
+            .page-wrap      { padding: 16px 12px; }
+            .card           { padding: 18px 14px 16px; border-radius: 10px; }
+            .logo-area      { margin-bottom: 18px; }
+            .welcome-title  { font-size: 15px; }
+        }
     </style>
 </head>
 
@@ -285,9 +316,10 @@
     <div class="grid-pattern"></div>
     <div id="falling-canvas"></div>
 
-    {{-- Back button --}}
+    {{-- ── Back to welcome ── --}}
     <a href="{{ url('/') }}" class="back-btn">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10 12L6 8l4-4"/>
         </svg>
         Kembali
@@ -295,13 +327,13 @@
 
     <div class="page-wrap">
 
-        {{-- Logo --}}
+        {{-- ── Logo & welcome heading ── --}}
         <div class="logo-area">
             <img src="{{ asset('assets/Logo SINTEM.png') }}" alt="SINTEM" class="logo-img">
             <div class="welcome-title">Selamat datang di Sintem!</div>
         </div>
 
-        {{-- Card --}}
+        {{-- ── Login card ── --}}
         <div class="card">
             <div class="card-title">Masuk dengan ID Anda</div>
             <div class="card-sub">Akses fitur laporan, barang hilang, dan pengumuman sekolah.</div>
@@ -319,7 +351,7 @@
             <form method="POST" action="{{ url('/login') }}" id="loginForm">
                 @csrf
 
-                {{-- NIS --}}
+                {{-- ── NIS ── --}}
                 <div class="field-nis">
                     <label class="field-label" for="nis">NIS</label>
                     <input
@@ -337,7 +369,7 @@
                     @enderror
                 </div>
 
-                {{-- Password --}}
+                {{-- ── Password ── --}}
                 <div class="field-password">
                     <label class="field-label" for="password">Password</label>
                     <div class="pw-wrap">
@@ -379,7 +411,7 @@
     </div>
 
     <script>
-        // Password toggle
+        // ── Password show/hide toggle ──
         const pwToggle = document.getElementById('pwToggle');
         const pwInput  = document.getElementById('password');
         const eyeShow  = document.getElementById('eye-show');
@@ -391,12 +423,14 @@
             eyeHide.style.display = hidden ? '' : 'none';
         });
 
+        // ── Disable submit while processing ──
         document.getElementById('loginForm').addEventListener('submit', function () {
             const btn = document.getElementById('submitBtn');
             btn.textContent = 'Memproses...';
             btn.disabled = true;
         });
 
+        // ── Falling shapes: scale count/size to viewport ──
         const vw = window.innerWidth;
         let cfg;
         if (vw >= 1024) {
@@ -438,14 +472,12 @@
             _buildDOM() {
                 this.size = cfg.sizeMin + Math.random() * (cfg.sizeMax - cfg.sizeMin);
                 const s=this.size, c=s/2, r=s/2-2;
-
                 this.svg = document.createElementNS(NS,'svg');
                 this.svg.setAttribute('width', s);
                 this.svg.setAttribute('height', s);
                 this.svg.setAttribute('viewBox', `0 0 ${s} ${s}`);
                 this.svg.setAttribute('overflow','visible');
                 this.svg.style.cssText = `position:absolute;top:0;left:0;will-change:transform;filter:drop-shadow(0 0 3px ${this.color});`;
-
                 this.pathEl = document.createElementNS(NS,'path');
                 this.pathEl.setAttribute('fill','none');
                 this.pathEl.setAttribute('stroke', this.color);
@@ -453,7 +485,6 @@
                 this.pathEl.setAttribute('stroke-linejoin','round');
                 this.svg.appendChild(this.pathEl);
                 canvas.appendChild(this.svg);
-
                 this.shapeSeq = [0,1,2,3,4,5].sort(()=>Math.random()-.5);
                 this.seqIdx = 0;
                 this.fromPts = SHAPES[this.shapeSeq[0]](r,c,c);
@@ -469,7 +500,6 @@
                 this.rotSpeed = (Math.random()-.5)*0.04;
                 this.rot      = Math.random()*360;
                 this.x = (this.laneX / 100) * window.innerWidth + (Math.random()-0.5)*40;
-
                 const fallDuration = (vh + this.size * 2) / (this.speed * (vh / 1000));
                 const staggerMs = (index / total) * fallDuration;
                 this.y = -this.size - 60 + this.speed * staggerMs * (vh / 1000);
@@ -482,7 +512,6 @@
                 this.speed    = cfg.speedMin + Math.random()*(cfg.speedMax - cfg.speedMin);
                 this.rotSpeed = (Math.random()-.5)*0.04;
                 this.morphSpeed = cfg.morphMin + Math.random()*(cfg.morphMax - cfg.morphMin);
-
                 const s=this.size, c=s/2, r=s/2-2;
                 this.shapeSeq = [0,1,2,3,4,5].sort(()=>Math.random()-.5);
                 this.seqIdx = 0;
@@ -497,23 +526,18 @@
                 if (!this._lastTs) this._lastTs = ts;
                 const dt = Math.min(ts - this._lastTs, 50);
                 this._lastTs = ts;
-
                 this.y   += this.speed * dt * (vh / 1000);
                 this.rot += this.rotSpeed * dt;
-
                 if (this.y > vh + this.size + 60) this.reset();
-
                 const travel = vh + this.size * 2 + 120;
                 const progress = (this.y + this.size + 60) / travel;
                 let opacity;
                 if (progress < 0.08)      opacity = (progress / 0.08) * cfg.opacityMax;
                 else if (progress > 0.88) opacity = ((1 - (progress - 0.88) / 0.12)) * cfg.opacityMax;
                 else                      opacity = cfg.opacityMax;
-
                 if (!this.morphStartTime) this.morphStartTime = ts;
                 const elapsed = ts - this.morphStartTime;
                 this.morphT = ease(Math.min(elapsed / this.morphSpeed, 1));
-
                 if (elapsed >= this.morphSpeed) {
                     this.seqIdx = (this.seqIdx + 1) % this.shapeSeq.length;
                     const next = (this.seqIdx + 1) % this.shapeSeq.length;
@@ -523,7 +547,6 @@
                     this.morphT  = 0;
                     this.morphStartTime = ts;
                 }
-
                 const pts = lerp(this.fromPts, this.toPts, this.morphT);
                 this.pathEl.setAttribute('d', toD(pts));
                 this.svg.style.transform = `translate(${this.x}px,${this.y}px) rotate(${this.rot}deg)`;
@@ -533,6 +556,7 @@
 
         const shapes = Array.from({length: cfg.count}, (_, i) => new Shape(i, cfg.count));
 
+        // ── Animation loop ──
         function loop(ts) {
             shapes.forEach(s => s.update(ts));
             requestAnimationFrame(loop);

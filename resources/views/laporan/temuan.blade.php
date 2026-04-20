@@ -16,7 +16,7 @@
     .main-content { background:#fff!important; }
     .page-header  { padding:16px 32px 14px!important; background:#fff!important; }
 
-    /* Toolbar */
+    /* ── Toolbar ── */
     .adm-toolbar { flex-shrink:0; padding:14px 32px 12px; border-bottom:1px solid #f0f0f5; background:#fff; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
     .adm-toolbar-left { display:flex; align-items:center; gap:6px; }
     .adm-dd { position:relative; display:inline-block; }
@@ -39,7 +39,7 @@
     .adm-search::placeholder { color:#c4c4cc; }
     .adm-search:focus { border-color:#7c3aed; box-shadow:0 0 0 2px rgba(124,58,237,0.1); }
 
-    /* Body + table */
+    /* ── Body + table ── */
     .adm-body { flex:1; min-height:0; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; }
     .adm-body::-webkit-scrollbar { display:none; }
     .adm-table-wrap { padding:20px 32px 32px; }
@@ -55,7 +55,7 @@
     .td-title { font-weight:600; color:#1a1a2e; max-width:240px; }
     .td-title span { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-    /* Badges */
+    /* ── Badges ── */
     .badge { font-size:11px; font-weight:700; padding:2px 10px; border-radius:4px; border:1px solid; display:inline-block; white-space:nowrap; }
     .badge-found    { background:#fffbeb; color:#92400e; border-color:#fde68a; }
     .badge-lost     { background:#fdf2f8; color:#9d174d; border-color:#f9a8d4; }
@@ -63,7 +63,7 @@
     .badge-approved { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; }
     .badge-solved   { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
 
-    /* Action btns */
+    /* ── Action btns ── */
     .action-btn { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:5px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; color:#6b7280; transition:background 0.12s,color 0.12s,border-color 0.12s; margin-right:3px; }
     .action-btn:hover { background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
     .action-btn.edit { color:#d97706; border-color:#fde68a; background:#fffbeb; }
@@ -71,11 +71,11 @@
     .action-btn.danger { color:#dc2626; border-color:#fecaca; background:#fef2f2; }
     .action-btn.danger:hover { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
 
-    /* Empty */
+    /* ── Empty ── */
     .adm-empty { text-align:center; padding:56px 20px; color:#9ca3af; font-size:13px; }
     .adm-empty svg { margin:0 auto 12px; display:block; }
 
-    /* Pagination */
+    /* ── Pagination ── */
     .adm-pagination { display:flex; align-items:center; justify-content:space-between; padding:14px 32px; border-top:1px solid #f0f0f5; font-size:13px; color:#6b7280; flex-shrink:0; background:#fff; }
     .adm-page-btns { display:flex; align-items:center; gap:4px; }
     .adm-page-btn { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:5px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-size:13px; color:#374151; text-decoration:none; transition:background 0.1s; }
@@ -188,6 +188,37 @@
     .btn-del-cancel  { padding:8px 20px; border:1px solid #e5e7eb; border-radius:6px; background:#fff; color:#374151; font-size:13px; font-weight:700; font-family:'Lato',sans-serif; cursor:pointer; }
     .btn-del-confirm { padding:8px 20px; background:#dc2626; color:#fff; font-size:13px; font-weight:700; font-family:'Lato',sans-serif; border:none; border-radius:6px; cursor:pointer; transition:opacity 0.15s; }
     .btn-del-confirm:hover { opacity:0.88; }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Tablet  768–1023px : reduce padding, horizontal scroll on table
+       ▸ Mobile  < 768px   : compact toolbar, full-width search
+       ▸ XS      < 480px   : hide less-critical columns
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet ── */
+    @media (max-width: 1023px) {
+        .adm-toolbar      { padding: 12px 20px 10px; }
+        .adm-table-wrap   { padding: 14px 20px 24px; overflow-x: auto; }
+        table             { min-width: 600px; }
+        .adm-pagination   { padding: 12px 20px; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .adm-toolbar      { padding: 10px 16px 8px; flex-wrap: wrap; gap: 8px; }
+        .adm-toolbar-left { flex-wrap: wrap; }
+        .adm-search       { width: 100%; }
+        .adm-search-wrap  { flex: 1; }
+        .adm-table-wrap   { padding: 10px 16px 20px; }
+        .adm-pagination   { padding: 10px 16px; flex-wrap: wrap; gap: 6px; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .adm-toolbar { flex-direction: column; align-items: stretch; }
+        table { min-width: 520px; }
+    }
 </style>
 @endpush
 

@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TemuanController extends Controller
 {
+    // ── TAMPILKAN SEMUA TEMUAN (HALAMAN PUBLIK) ──
     public function index(Request $request)
     {
         $sort   = $request->get('sort', 'terbaru');
@@ -33,7 +35,6 @@ class TemuanController extends Controller
         $query->orderBy('lost_founds.created_at', $sort === 'terlama' ? 'asc' : 'desc');
         $items = $query->get();
 
-        // Photo map: keyed by lost_found id
         $ids = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
@@ -65,46 +66,75 @@ class TemuanController extends Controller
         ));
     }
 
+    // ── FORM BUAT LAPORAN ──
     public function create()
     {
         return view('temuan.buat');
     }
 
+    // ── SIMPAN LAPORAN TEMUAN ──
     public function store(Request $request)
     {
+        // 1. Validasi Input
         $request->validate([
             'type'        => 'required|in:found,lost',
             'item_name'   => 'required|string|max:100',
             'description' => 'nullable|string',
+            'found_at'    => 'nullable|string|max:150',
             'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        $lostFoundId = DB::table('lost_founds')->insertGetId([
-            'user_id'     => Auth::user()->id,
-            'type'        => $request->type,
-            'item_name'   => $request->item_name,
-            'description' => $request->description,
-            'status'      => 'pending',
-            'created_at'  => now(),
-            'updated_at'  => now(),
-        ]);
+        // Gunakan Transaction agar jika salah satu gagal, semua batal (mencegah data kosong)
+        DB::beginTransaction();
 
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('upload/photos/lost_founds', 'public');
-            DB::table('photos')->insert([
-                'source_type' => 'lost_found',
-                'source_id'   => $lostFoundId,
-                'file_name'   => $request->file('photo')->getClientOriginalName(),
-                'file_path'   => $path,
-                'file_type'   => $request->file('photo')->getMimeType(),
-                'file_size'   => $request->file('photo')->getSize(),
-                'uploaded_by' => Auth::user()->id,
+        try {
+            // 2. Insert ke Tabel lost_founds
+            // Pastikan nama kolom 'found_at' benar-benar ada di database kamu
+            $lostFoundId = DB::table('lost_founds')->insertGetId([
+                'user_id'     => Auth::id(), // Menggunakan Auth::id() lebih singkat
+                'type'        => $request->type,
+                'item_name'   => $request->item_name,
+                'description' => $request->description,
+                'found_at'    => $request->found_at, 
+                'status'      => 'pending',
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);
-        }
 
-        return redirect()->route('temuan.index')
-            ->with('success', 'Laporan berhasil dikirim dan menunggu persetujuan.');
+            // 3. Simpan Foto jika ada
+            if ($request->hasFile('photo')) {
+                $file = $request->file('photo');
+                // Simpan file fisik
+                $path = $file->store('upload/photos/lost_founds', 'public');
+                
+                // Simpan record ke tabel photos
+                DB::table('photos')->insert([
+                    'source_type' => 'lost_found',
+                    'source_id'   => $lostFoundId,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => $path,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            DB::commit(); // Simpan permanen ke database
+
+            return redirect()->route('temuan.index')
+                ->with('success', 'Laporan berhasil dikirim dan menunggu persetujuan admin.');
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // Batalkan semua jika ada error
+            
+            // Log error ke storage/logs/laravel.log agar bisa kamu cek lewat CMD
+            Log::error('Gagal Simpan Temuan: ' . $e->getMessage());
+
+            return back()
+                ->with('error', 'Gagal simpan ke database: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 }

@@ -5,6 +5,12 @@
     {{-- ── LOGO ── --}}
     <div class="sb-logo">
         <img src="{{ asset('assets/Logo SINTEM.png') }}" alt="SINTEM" class="sb-logo-img">
+        {{-- Close button: visible only on mobile/tablet overlay mode --}}
+        <button class="sb-close-btn" onclick="closeSidebar()" aria-label="Tutup menu">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
     </div>
 
     {{-- ── SEARCH ── --}}
@@ -52,7 +58,6 @@
             <span>Informasi Temuan</span>
         </a>
 
-        {{-- Buat Laporan — pen + paper icon --}}
         <a href="{{ route('laporan.buat') }}"
            class="sb-item {{ request()->routeIs('laporan.buat') ? 'active' : '' }}">
             <svg class="sb-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,7 +69,7 @@
             <span>Buat Laporan</span>
         </a>
 
-        {{-- Divider --}}
+        {{-- ── Divider ── --}}
         <div class="sb-divider"></div>
 
         {{-- OTHER group --}}
@@ -116,13 +121,13 @@
 
     </nav>
 
-    {{-- Search empty state --}}
+    {{-- ── Search empty state ── --}}
     <div id="sb-no-result" style="display:none; padding: 8px 10px; font-size:12px; color:#9ca3af; text-align:center;">
         Tidak ditemukan
     </div>
 
     {{-- ── USER PROFILE ── --}}
-    <a href="{{ route('profile.show') }}" class="sb-user">
+    <a href="{{ route('profile.show') }}" class="sb-user {{ request()->routeIs('profile.show') ? 'sb-user-active' : '' }}">
         <div class="sb-avatar-initial">
         {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
         {{ strtoupper(substr(strrchr(Auth::user()->name ?? '', ' '), 1, 1)) }}
@@ -154,20 +159,36 @@
         font-family: 'Lato', sans-serif;
         overflow-y: auto;
         overflow-x: hidden;
+        /* ── mobile: starts off-screen ── */
+        transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     /* ── LOGO ── */
     .sb-logo {
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: space-between;
         padding: 0 8px;
         margin-bottom: 20px;
     }
-    .sb-logo-img {
-        height: 36px;
-        width: auto;
+    .sb-logo-img { height: 36px; width: auto; }
+
+    /* ── Close button (hidden on desktop) ── */
+    .sb-close-btn {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-radius: 6px;
+        color: #555566;
+        transition: background 0.15s;
+        flex-shrink: 0;
     }
+    .sb-close-btn:hover { background: #f4f0ff; color: #4f28d9; }
 
     /* ── SEARCH ── */
     .sb-search-wrap {
@@ -218,7 +239,7 @@
         margin: 14px 8px;
     }
 
-    /* ── NAV ITEMS ── */
+    /* ── NAV ── */
     .sb-nav {
         flex: 1;
         display: flex;
@@ -226,6 +247,7 @@
         gap: 2px;
     }
 
+    /* ── NAV ITEMS ── */
     .sb-item {
         display: flex;
         align-items: center;
@@ -243,17 +265,10 @@
         width: 100%;
         text-align: left;
     }
-    .sb-item:hover {
-        background: #f4f0ff;
-        color: #4f28d9;
-    }
-    .sb-item.active {
-        background: #ede9fe;
-        color: #4f28d9;
-        font-weight: 700;
-    }
+    .sb-item:hover         { background: #f4f0ff; color: #4f28d9; }
+    .sb-item.active        { background: #ede9fe; color: #4f28d9; font-weight: 700; }
     .sb-item.active .sb-icon { stroke: #4f28d9; }
-    .sb-item:hover .sb-icon  { stroke: #4f28d9; }
+    .sb-item:hover  .sb-icon { stroke: #4f28d9; }
 
     .sb-icon {
         stroke: #888899;
@@ -300,15 +315,11 @@
         text-decoration: none;
         transition: background 0.15s, color 0.15s;
     }
-    .sb-sub-item:hover { background: #f4f0ff; color: #4f28d9; }
+    .sb-sub-item:hover  { background: #f4f0ff; color: #4f28d9; }
     .sb-sub-item.active { color: #4f28d9; font-weight: 700; }
 
-    .sb-sub-icon {
-        stroke: #aaaabc;
-        flex-shrink: 0;
-        transition: stroke 0.15s;
-    }
-    .sb-sub-item:hover .sb-sub-icon  { stroke: #4f28d9; }
+    .sb-sub-icon { stroke: #aaaabc; flex-shrink: 0; transition: stroke 0.15s; }
+    .sb-sub-item:hover  .sb-sub-icon { stroke: #4f28d9; }
     .sb-sub-item.active .sb-sub-icon { stroke: #4f28d9; }
 
     /* ── USER PROFILE ── */
@@ -316,48 +327,32 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 10px 10px;
+        padding: 10px;
         border-radius: 10px;
         border: 1px solid #ebebf0;
         text-decoration: none;
         margin-top: auto;
         transition: background 0.15s, border-color 0.15s;
     }
+    .sb-user:hover { background: #f4f0ff; border-color: #c4b5fd; }
+    .sb-user-active { background: #ede9fe !important; border-color: #c4b5fd !important; }
 
     .sb-avatar-initial {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #9025FB, #4617D3);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    letter-spacing: -0.5px;
-    }
-
-    .sb-user:hover {
-        background: #f4f0ff;
-        border-color: #c4b5fd;
-    }
-    .sb-avatar {
         width: 34px;
         height: 34px;
         border-radius: 50%;
-        object-fit: cover;
-        flex-shrink: 0;
-        border: 2px solid #ede9fe;
-    }
-    .sb-user-info {
+        background: linear-gradient(135deg, #9025FB, #4617D3);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
         display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-width: 0;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        letter-spacing: -0.5px;
     }
-    .sb-user-name {
+    .sb-user-info  { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .sb-user-name  {
         font-size: 13px;
         font-weight: 700;
         color: #1a1a2e;
@@ -365,26 +360,50 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .sb-user-id {
-        font-size: 11px;
-        color: #9ca3af;
-        font-weight: 400;
-    }
-    .sb-user-arrow {
-        stroke: #c0c0cc;
-        flex-shrink: 0;
-    }
+    .sb-user-id    { font-size: 11px; color: #9ca3af; font-weight: 400; }
+    .sb-user-arrow { stroke: #c0c0cc; flex-shrink: 0; }
     .sb-user:hover .sb-user-arrow { stroke: #4f28d9; }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Desktop  ≥ 1024px  : sidebar always visible
+       ▸ Tablet   768–1023px: sidebar as full-height overlay (slides in)
+       ▸ Mobile   < 768px   : same overlay, slightly narrower sidebar
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet & Mobile: sidebar becomes a drawer ── */
+    @media (max-width: 1023px) {
+        .sintem-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 200;
+            transform: translateX(-100%);  /* hidden off-screen by default */
+            box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+        }
+        .sintem-sidebar.open {
+            transform: translateX(0);      /* slides in when JS adds .open */
+        }
+        .sb-close-btn { display: flex; }
+    }
+
+    /* ── Mobile (< 768px): slightly narrower drawer ── */
+    @media (max-width: 767px) {
+        .sintem-sidebar { width: 80vw; min-width: 240px; max-width: 300px; }
+    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+
+        // ── Auto-open dropdown if a child item is active ──
         document.querySelectorAll('.sb-dropdown').forEach(drop => {
             if (drop.querySelector('.sb-sub-item.active')) {
                 drop.classList.add('open');
             }
         });
 
+        // ── Sidebar search filter ──
         const searchInput = document.querySelector('.sb-search');
         const noResult    = document.getElementById('sb-no-result');
 
@@ -399,6 +418,7 @@
 
             let anyVisible = false;
 
+            // ── Reset all visibility on empty query ──
             if (query === '') {
                 mainItems.forEach(el => el.style.display = '');
                 dropdowns.forEach(el => {
@@ -414,35 +434,37 @@
                 return;
             }
 
+            // ── Hide group labels and divider while searching ──
             labels.forEach(el => el.style.display = 'none');
             if (divider) divider.style.display = 'none';
 
+            // ── Filter direct nav items ──
             mainItems.forEach(el => {
-                const text = el.querySelector('span') ? el.querySelector('span').textContent.toLowerCase() : '';
+                const text  = el.querySelector('span') ? el.querySelector('span').textContent.toLowerCase() : '';
                 const match = text.includes(query);
                 el.style.display = match ? '' : 'none';
                 if (match) anyVisible = true;
             });
 
+            // ── Filter dropdown groups ──
             dropdowns.forEach(drop => {
-                const triggerText = drop.querySelector('.sb-dropdown-trigger span')
+                const triggerText  = drop.querySelector('.sb-dropdown-trigger span')
                     ? drop.querySelector('.sb-dropdown-trigger span').textContent.toLowerCase()
                     : '';
                 const triggerMatch = triggerText.includes(query);
 
                 let anySubMatch = false;
                 drop.querySelectorAll('.sb-sub-item').forEach(sub => {
-                    const subText = sub.textContent.trim().toLowerCase();
-                    const subMatch = subText.includes(query);
+                    const subMatch = sub.textContent.trim().toLowerCase().includes(query);
                     sub.style.display = subMatch ? '' : 'none';
                     if (subMatch) anySubMatch = true;
                 });
 
                 if (triggerMatch || anySubMatch) {
                     drop.style.display = '';
-                    drop.classList.add('open'); // open dropdown so sub-items are visible
+                    drop.classList.add('open');
                     anyVisible = true;
-                    // If only trigger matched, show all sub-items
+                    // ── Show all sub-items when only the parent matched ──
                     if (triggerMatch && !anySubMatch) {
                         drop.querySelectorAll('.sb-sub-item').forEach(sub => sub.style.display = '');
                     }
@@ -455,6 +477,7 @@
         });
     });
 
+    // ── Toggle a sidebar dropdown open/closed ──
     function toggleDropdown(id) {
         document.getElementById(id).classList.toggle('open');
     }

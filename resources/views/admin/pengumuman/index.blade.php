@@ -211,12 +211,19 @@
     /* Form fields */
     .form-field { margin-bottom:16px; }
     .form-label { display:block;font-size:12.5px;font-weight:700;color:#374151;margin-bottom:6px; }
+    .form-textarea { resize:vertical;min-height:140px;line-height:1.6; }
     .form-input,.form-textarea,.form-select {
         width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;
         font-size:13px;font-family:'Lato',sans-serif;color:#111;background:#fff;
         outline:none;transition:border-color 0.15s,box-shadow 0.15s;
     }
-    .form-textarea { resize:vertical;min-height:140px;line-height:1.6; }
+    .form-select {
+        padding-right:32px;
+        appearance:none;-webkit-appearance:none;cursor:pointer;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-repeat:no-repeat;background-position:right 10px center;
+    }
+    .form-select:hover { border-color:#c4b5fd; }
     .form-input:focus,.form-textarea:focus,.form-select:focus {
         border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.1);
     }
@@ -284,6 +291,37 @@
     .btn-arc-cancel  { padding:8px 20px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#374151;font-size:13px;font-weight:700;font-family:'Lato',sans-serif;cursor:pointer; }
     .btn-arc-confirm { padding:8px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:13px;font-weight:700;font-family:'Lato',sans-serif;border:none;border-radius:6px;cursor:pointer;transition:opacity 0.15s; }
     .btn-arc-confirm:hover { opacity:0.88; }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Tablet  768–1023px : reduce padding, table horizontal scroll
+       ▸ Mobile  < 768px   : compact toolbar, full-width search
+       ▸ XS      < 480px   : stack toolbar
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet ── */
+    @media (max-width: 1023px) {
+        .adm-toolbar    { padding: 12px 20px 10px; }
+        .adm-table-wrap { padding: 14px 20px 24px; overflow-x: auto; }
+        table           { min-width: 620px; }
+        .adm-pagination { padding: 12px 20px; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .adm-toolbar      { padding: 10px 16px 8px; flex-wrap: wrap; gap: 8px; }
+        .adm-toolbar-left { flex-wrap: wrap; }
+        .adm-search       { width: 100%; }
+        .adm-search-wrap  { flex: 1; min-width: 0; }
+        .adm-table-wrap   { padding: 10px 16px 20px; }
+        .adm-pagination   { padding: 10px 16px; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .adm-toolbar { flex-direction: column; align-items: stretch; }
+        table        { min-width: 520px; }
+    }
 </style>
 @endpush
 
@@ -621,11 +659,11 @@
 
 @push('scripts')
 <script>
-    // ── Debounce ──
+    /* ── Debounce ── */
     let _st;
     function debounce(form) { clearTimeout(_st); _st = setTimeout(()=>form.submit(),500); }
 
-    // ── Auto-dismiss flash alert ──
+    /* ── Auto-dismiss flash alert ── */
     (function() {
         const alert = document.getElementById('flash-alert');
         if (alert) {
@@ -636,7 +674,7 @@
         }
     })();
 
-    // ── Dropdown ──
+    /* ── Dropdown ── */
     function toggleDd(id) { document.getElementById(id).classList.toggle('open'); }
     function selectFilter(val,lbl) {
         document.getElementById('filterInput').value = val;
@@ -649,7 +687,7 @@
         ['filterDd'].forEach(id => { const el=document.getElementById(id); if(el&&!el.contains(e.target)) el.classList.remove('open'); });
     });
 
-    // ── Edit Side Panel ──
+    /* ── Edit Side Panel ── */
     function openEditPanel(data) {
         document.getElementById('epTitle').value   = data.title;
         document.getElementById('epContent').value = data.content ?? '';
@@ -733,7 +771,7 @@
         reader.readAsDataURL(file);
     }
 
-    // ── Delete ──
+    /* ── Delete ── */
     function confirmDelete(id, title) {
         document.getElementById('delDesc').textContent = `"${title}" akan dihapus permanen.`;
         document.getElementById('delForm').action = `/admin/pengumuman/${id}`;
@@ -741,7 +779,7 @@
     }
     function closeDelConfirm() { document.getElementById('delOverlay').classList.remove('open'); }
 
-    // ── Archive / Toggle ──
+    /* ── Archive / Toggle ── */
     function confirmArchive(id, title, isPublished) {
         document.getElementById('arcTitle').textContent   = isPublished ? 'Arsipkan Pengumuman?' : 'Publish Pengumuman?';
         document.getElementById('arcDesc').textContent    = isPublished ? `"${title}" akan dijadikan draft.` : `"${title}" akan dipublish.`;
@@ -751,7 +789,7 @@
     }
     function closeArcConfirm() { document.getElementById('arcOverlay').classList.remove('open'); }
 
-    // ── Escape key ──
+    /* ── Escape key ── */
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') { closeEditPanel(); closeDelConfirm(); closeArcConfirm(); }
     });

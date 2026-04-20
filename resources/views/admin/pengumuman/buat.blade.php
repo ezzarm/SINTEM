@@ -136,6 +136,34 @@
         transition: opacity 0.15s, transform 0.15s;
     }
     .btn-publish-submit:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Tablet  768–1023px : reduce card padding
+       ▸ Mobile  < 768px   : full-width action buttons
+       ▸ XS      < 480px   : minimal padding
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet ── */
+    @media (max-width: 1023px) {
+        .page-body  { padding: 20px !important; }
+        .form-card  { padding: 22px 20px 24px; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .page-body   { padding: 14px 16px !important; }
+        .form-card   { padding: 18px 16px 20px; }
+        .form-actions { justify-content: stretch; flex-wrap: wrap; }
+        .form-actions .btn-cancel,
+        .form-actions .btn-save { flex: 1; justify-content: center; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .page-body  { padding: 12px !important; }
+        .form-card  { padding: 14px 12px 16px; border-radius: 8px; }
+    }
 </style>
 @endpush
 
@@ -180,8 +208,7 @@
             <label class="form-label">Foto / Banner <span style="font-weight:400;color:#9ca3af;font-size:12px;">(opsional)</span></label>
             <label class="upload-zone" id="bannerZone" for="bannerInput"
                    ondragover="upOver(event)" ondragleave="upLeave(event)" ondrop="upDrop(event)">
-                <input type="file" name="photo" id="bannerInput" accept="image/png,image/jpeg,image/webp"
-                       onchange="upHandle(this.files)">
+                <input type="file" name="photo" id="bannerInput" accept="image/*" onchange="upHandle(this.files)">
                 <div id="bannerPh">
                     <div class="up-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:100%;height:100%">
@@ -289,7 +316,7 @@
 
 @push('scripts')
 <script>
-    // ── Rich text editor ──
+    /* ── Rich text editor ── */
     document.querySelectorAll('.toolbar-btn[data-cmd]').forEach(btn => {
         btn.addEventListener('mousedown', e => e.preventDefault());
         btn.addEventListener('click', () => {
@@ -326,7 +353,7 @@
     // sync content sebelum submit
     document.getElementById('buatForm').addEventListener('submit', syncEditors);
 
-    // ── Banner upload ──
+    /* ── Banner upload ── */
     function upHandle(files) {
         const file = files[0];
         if (!file) return;
@@ -366,11 +393,11 @@
         upHandle(e.dataTransfer.files);
     }
 
-    // ── Attachment tabs ──
+    /* ── Attachment tabs ── */
     function switchTab(tab) {
         document.querySelectorAll('.attach-tab').forEach((t,i) => t.classList.toggle('active', ['file','link'][i] === tab));
         document.querySelectorAll('.attach-pane').forEach(p => p.classList.remove('active'));
         document.getElementById('pane-' + tab).classList.add('active');
     }
 </script>
-@endpushphp -i | findstr "upload_max_filesize\|post_max_size\|file_uploads"
+@endpush

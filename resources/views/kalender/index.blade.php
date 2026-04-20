@@ -247,6 +247,37 @@
         text-decoration: underline;
     }
     
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Tablet  768–1023px : stack calendar + list, reduce padding
+       ▸ Mobile  < 768px   : full-width calendar, compact toolbar
+       ▸ XS      < 480px   : minimal padding
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet ── */
+    @media (max-width: 1023px) {
+        .kl-toolbar       { padding: 12px 20px 10px; }
+        .kl-body          { padding: 14px 20px 24px; flex-direction: column; }
+        .kl-calendar-col  { width: 100% !important; min-width: 0 !important; }
+        .kl-list-col      { width: 100% !important; min-width: 0 !important; border-left: none !important; border-top: 1px solid #f0f0f5; padding-top: 16px; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .kl-toolbar       { padding: 10px 16px 8px; flex-wrap: wrap; }
+        .kl-toolbar-left,
+        .kl-toolbar-right { flex-wrap: wrap; }
+        .kl-body          { padding: 12px 16px 20px; }
+        .kl-search        { width: 100%; }
+        .kl-search-wrap   { flex: 1; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .kl-toolbar  { flex-direction: column; align-items: stretch; }
+        .kl-body     { padding: 10px 12px 16px; }
+    }
 </style>
 @endpush
 

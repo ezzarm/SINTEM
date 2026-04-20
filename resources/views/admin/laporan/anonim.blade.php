@@ -204,13 +204,13 @@
     .form-select-styled {
         width:100%;padding:8px 32px 8px 10px;border:1px solid #e5e7eb;border-radius:6px;
         font-size:13px;font-family:'Lato',sans-serif;color:#374151;background:#fff;
-        outline:none;transition:border-color 0.15s;
+        outline:none;transition:border-color 0.15s,box-shadow 0.15s;
         appearance:none;-webkit-appearance:none;
         background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
         background-repeat:no-repeat;background-position:right 10px center;cursor:pointer;
     }
-    .form-select-styled:focus { border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.1); }
-    .form-textarea-styled {
+    .form-select-styled:hover { border-color:#c4b5fd; }
+    .form-select-styled:focus { border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.1); }    .form-textarea-styled {
         width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;
         font-size:13px;font-family:'Lato',sans-serif;color:#374151;background:#fff;
         outline:none;transition:border-color 0.15s;resize:vertical;min-height:80px;line-height:1.6;
@@ -254,6 +254,37 @@
     @media (max-width:900px) {
         .adm-alert { margin:12px 16px 0; }
         .modal-box { max-width:100%; }
+    }
+
+    /* ══════════════════════════════════════════════
+       BREAKPOINTS
+       ▸ Tablet  768–1023px : reduce padding, table horizontal scroll
+       ▸ Mobile  < 768px   : compact toolbar, full-width search
+       ▸ XS      < 480px   : stack toolbar
+    ══════════════════════════════════════════════ */
+
+    /* ── Tablet ── */
+    @media (max-width: 1023px) {
+        .adm-toolbar    { padding: 12px 20px 10px; }
+        .adm-table-wrap { padding: 14px 20px 24px; overflow-x: auto; }
+        table           { min-width: 620px; }
+        .adm-pagination { padding: 12px 20px; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+        .adm-toolbar      { padding: 10px 16px 8px; flex-wrap: wrap; gap: 8px; }
+        .adm-toolbar-left { flex-wrap: wrap; }
+        .adm-search       { width: 100%; }
+        .adm-search-wrap  { flex: 1; min-width: 0; }
+        .adm-table-wrap   { padding: 10px 16px 20px; }
+        .adm-pagination   { padding: 10px 16px; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+    }
+
+    /* ── Small mobile ── */
+    @media (max-width: 479px) {
+        .adm-toolbar { flex-direction: column; align-items: stretch; }
+        table        { min-width: 520px; }
     }
 </style>
 @endpush
@@ -565,7 +596,7 @@
 
 @push('scripts')
 <script>
-    // ── Auto-dismiss flash alert ──
+    /* ── Auto-dismiss flash alert ── */
     (function() {
         const alert = document.getElementById('flash-alert');
         if (alert) {
@@ -576,7 +607,7 @@
         }
     })();
 
-    // ── Dropdown toggle ──
+    /* ── Dropdown toggle ── */
     function toggleDd(id) {
         document.querySelectorAll('.adm-dd.open').forEach(d => { if (d.id !== id) d.classList.remove('open'); });
         document.getElementById(id).classList.toggle('open');
@@ -587,7 +618,7 @@
         }
     });
 
-    // ── Filter select ──
+    /* ── Filter select ── */
     function selectFilter(val, lbl) {
         document.getElementById('filterInput').value = val;
         document.getElementById('filterLabel').textContent = lbl;
@@ -598,11 +629,11 @@
         document.getElementById('filterForm').submit();
     }
 
-    // ── Search debounce ──
+    /* ── Search debounce ── */
     let _dt;
     function debounce(form) { clearTimeout(_dt); _dt = setTimeout(() => form.submit(), 450); }
 
-    // ── View Modal ──
+    /* ── View Modal ── */
     function openViewModal(data) {
         document.getElementById('modalTicket').textContent  = 'Detail Laporan – ' + data.ticket;
         document.getElementById('modalCategory').textContent = data.category;
@@ -640,7 +671,7 @@
         document.getElementById('viewModalWrap').style.display = 'none';
     }
 
-    // ── Delete Confirm ──
+    /* ── Delete Confirm ── */
     function confirmDelete(id, ticket) {
         document.getElementById('delDesc').textContent = `Laporan ${ticket} akan dihapus secara permanen.`;
         document.getElementById('delForm').action = `/admin/laporan/anonim/${id}`;
@@ -652,7 +683,7 @@
         document.getElementById('delModalWrap').style.display = 'none';
     }
 
-    // ── Escape key ──
+    /* ── Escape key ── */
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') { closeViewModal(); closeDelConfirm(); }
     });
