@@ -1,5 +1,4 @@
 <?php
-// app/Providers/AppServiceProvider.php
 
 namespace App\Providers;
 
@@ -20,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
         // ── Force HTTPS in production ──────────────────────────────────
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+            $this->app['request']->server->set('HTTPS', 'on'); // ← tambahan ini
         }
 
         // ── Prevent accidental APP_DEBUG=true in production ───────────
