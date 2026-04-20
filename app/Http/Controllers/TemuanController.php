@@ -103,16 +103,14 @@ class TemuanController extends Controller
 
             // 3. Simpan Foto jika ada
             if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                // Simpan file fisik
-                $path = $file->store('upload/photos/lost_founds', 'public');
-                
-                // Simpan record ke tabel photos
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
                 DB::table('photos')->insert([
                     'source_type' => 'lost_found',
                     'source_id'   => $lostFoundId,
                     'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
+                    'file_path'   => '',
+                    'file_data'   => $base64,
                     'file_type'   => $file->getMimeType(),
                     'file_size'   => $file->getSize(),
                     'uploaded_by' => Auth::id(),
