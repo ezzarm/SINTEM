@@ -232,7 +232,7 @@
                     @foreach($files as $file)
                         @if(str_starts_with($file->file_type, 'image'))
                         <div class="pg-image">
-                            <img src="{{ asset('storage/' . $file->file_path) }}"
+                            <img src="{{ str_starts_with($file->file_path, 'data:') ? $file->file_path : asset('storage/' . $file->file_path) }}"
                                  alt="{{ $file->file_name }}"
                                  onerror="this.parentElement.style.display='none'">
                         </div>
