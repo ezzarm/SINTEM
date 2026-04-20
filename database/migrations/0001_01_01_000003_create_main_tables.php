@@ -99,7 +99,8 @@ return new class extends Migration
             $table->enum('source_type', ['announcement', 'event', 'lost_found', 'anonymous_report'])->comment('Parent entity type this photo belongs to');
             $table->unsignedInteger('source_id')->comment('Primary key of the parent entity row');
             $table->string('file_name', 255)->comment('Original filename as uploaded');
-            $table->text('file_path')->comment('Relative storage path');
+            $table->text('file_path')->nullable()->comment('Relative storage path (diisi jika simpan ke disk; kosong jika pakai file_data)');
+            $table->longText('file_data')->nullable()->comment('Base64 data URI foto, format: data:image/jpeg;base64,... (diisi jika tidak pakai file_path)');
             $table->string('file_type', 100)->comment('MIME type');
             $table->integer('file_size')->comment('File size in bytes');
             $table->unsignedInteger('uploaded_by')->nullable()->comment('User who uploaded; NULL for anonymous report photos');
