@@ -63,19 +63,6 @@ class PengumumanController extends Controller
 
     public function store(Request $request)
     {
-        // =============================================
-        // DEBUG SEMENTARA — hapus setelah masalah solved
-        dd([
-            'hasFile_photo'      => $request->hasFile('photo'),
-            'allFiles'           => $request->allFiles(),
-            'is_published'       => $request->is_published,
-            'title'              => $request->title,
-            'content_length'     => strlen($request->content ?? ''),
-            'method'             => $request->method(),
-            'content_type_header'=> $request->header('Content-Type'),
-        ]);
-        // =============================================
-
         $request->validate([
             'title'        => 'required|string|max:255',
             'content'      => 'required|string',
@@ -93,13 +80,13 @@ class PengumumanController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $path = $file->store('uploads/photos/announcements', 'public');
+            $file     = $request->file('photo');
+            $base64   = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
             DB::table('photos')->insert([
                 'source_type' => 'announcement',
                 'source_id'   => $announcementId,
                 'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => $path,
+                'file_path'   => $base64,
                 'file_type'   => $file->getMimeType(),
                 'file_size'   => $file->getSize(),
                 'uploaded_by' => auth()->user()->id,
@@ -152,18 +139,17 @@ class PengumumanController extends Controller
                 ->first();
 
             if ($oldPhoto) {
-                Storage::disk('public')->delete($oldPhoto->file_path);
                 DB::table('photos')->where('id', $oldPhoto->id)->delete();
             }
 
-            $file = $request->file('photo');
-            $path = $file->store('uploads/photos/announcements', 'public');
+            $file   = $request->file('photo');
+            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
 
             DB::table('photos')->insert([
                 'source_type' => 'announcement',
                 'source_id'   => $id,
                 'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => $path,
+                'file_path'   => $base64,
                 'file_type'   => $file->getMimeType(),
                 'file_size'   => $file->getSize(),
                 'uploaded_by' => auth()->user()->id,
