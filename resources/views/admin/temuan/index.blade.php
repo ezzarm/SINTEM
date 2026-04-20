@@ -506,7 +506,7 @@
                                     'found_at'    => $item->found_at,
                                     'description' => $item->description,
                                     'created_at'  => \Carbon\Carbon::parse($item->created_at)->format('d M Y, H:i') . ' WIB',
-                                    'photo'       => isset($photoMap[$item->id]) ? asset('storage/'.$photoMap[$item->id]->file_path) : null,
+                                    'photo'       => isset($photoMap[$item->id]) ? $photoMap[$item->id]->file_data : null,
                                 ]) }})">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3" stroke-width="1.8"/></svg>
                             </button>
@@ -532,7 +532,7 @@
                                         'status'      => $item->status,
                                         'found_at'    => $item->found_at,
                                         'description' => $item->description,
-                                        'photo'       => isset($photoMap[$item->id]) ? asset('storage/'.$photoMap[$item->id]->file_path) : null,
+                                        'photo'       => isset($photoMap[$item->id]) ? $photoMap[$item->id]->file_data : null,
                                     ]) }})">
                                     <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
@@ -564,7 +564,7 @@
     {{-- CARD VIEW (mobile/narrow) --}}
     <div class="cards-wrap">
         @forelse($items as $i => $item)
-        @php $photo = isset($photoMap[$item->id]) ? asset('storage/'.$photoMap[$item->id]->file_path) : null; @endphp
+        @php $photo = isset($photoMap[$item->id]) ? $photoMap[$item->id]->file_data : null; @endphp
         <div class="item-card">
             @if($photo)
             <img class="card-photo" src="{{ $photo }}" alt="{{ $item->item_name }}" onerror="this.style.display='none'">
