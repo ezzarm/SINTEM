@@ -34,12 +34,6 @@ class User extends Authenticatable
         'last_login' => 'datetime',
     ];
 
-    // Custom auth identifier (NIS-based login)
-    public function getAuthIdentifierName(): string
-    {
-        return 'identifier';
-    }
-
     public function getAuthPassword(): string
     {
         return $this->password;
