@@ -80,13 +80,14 @@ class PengumumanController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $file     = $request->file('photo');
-            $base64   = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            $file   = $request->file('photo');
+            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
             DB::table('photos')->insert([
                 'source_type' => 'announcement',
                 'source_id'   => $announcementId,
                 'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => $base64,
+                'file_path'   => '',
+                'file_data'   => $base64,
                 'file_type'   => $file->getMimeType(),
                 'file_size'   => $file->getSize(),
                 'uploaded_by' => auth()->user()->id,
@@ -139,6 +140,9 @@ class PengumumanController extends Controller
                 ->first();
 
             if ($oldPhoto) {
+                if ($oldPhoto->file_path) {
+                    Storage::disk('public')->delete($oldPhoto->file_path);
+                }
                 DB::table('photos')->where('id', $oldPhoto->id)->delete();
             }
 
@@ -149,7 +153,8 @@ class PengumumanController extends Controller
                 'source_type' => 'announcement',
                 'source_id'   => $id,
                 'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => $base64,
+                'file_path'   => '',
+                'file_data'   => $base64,
                 'file_type'   => $file->getMimeType(),
                 'file_size'   => $file->getSize(),
                 'uploaded_by' => auth()->user()->id,
