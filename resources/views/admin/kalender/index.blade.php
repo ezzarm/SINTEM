@@ -388,7 +388,7 @@
                                     'event_date_end'=> $item->event_date_end,
                                     'description'   => $item->description,
                                     'is_published'  => $item->is_published,
-                                    'photo'         => $item->photo_path ? asset('storage/'.$item->photo_path) : null,
+                                    'photo'         => $item->photo_data ?? null,
                                 ]) }})">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </button>
@@ -444,8 +444,8 @@
             else { $sClass='status-published'; $sLabel='Published'; }
         @endphp
         <div class="item-card">
-            @if($item->photo_path)
-            <img class="card-photo" src="{{ asset('storage/'.$item->photo_path) }}" alt="{{ $item->event_name }}" onerror="this.style.display='none'">
+            @if($item->photo_data)
+            <img class="card-photo" src="{{ $item->photo_data }}" alt="{{ $item->event_name }}" onerror="this.style.display='none'">
             @else
             <div class="card-photo-placeholder"><svg width="22" height="22" fill="none" stroke="#c4c4d4" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke-width="1.5"/><line x1="16" y1="2" x2="16" y2="6" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke-width="1.5"/></svg></div>
             @endif
@@ -464,7 +464,7 @@
                 @endif
                 <div class="card-foot">
                     <button type="button" class="action-btn action-btn-edit" title="Edit"
-                        onclick="openEditPanel({{ json_encode(['id'=>$item->id,'event_name'=>$item->event_name,'category_id'=>$item->category_id,'location_id'=>$item->location_id,'event_date'=>$item->event_date,'event_date_end'=>$item->event_date_end,'description'=>$item->description,'is_published'=>$item->is_published,'photo'=>$item->photo_path?asset('storage/'.$item->photo_path):null]) }})">
+                        onclick="openEditPanel({{ json_encode(['id'=>$item->id,'event_name'=>$item->event_name,'category_id'=>$item->category_id,'location_id'=>$item->location_id,'event_date'=>$item->event_date,'event_date_end'=>$item->event_date_end,'description'=>$item->description,'is_published'=>$item->is_published,'photo'=>$item->photo_data??null]) }})">
                         <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                     <button type="button" class="action-btn action-btn-archive" title="{{ $item->is_published ? 'Jadikan Draft' : 'Publish' }}"
