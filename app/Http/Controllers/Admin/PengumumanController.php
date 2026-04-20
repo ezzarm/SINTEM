@@ -42,8 +42,8 @@ class PengumumanController extends Controller
             $query->where('announcements.is_published', 0);
         }
 
-        $total   = $query->count();
-        $items   = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        $total = $query->count();
+        $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
         foreach ($items as $item) {
             $item->photos = DB::table('photos')
@@ -63,139 +63,175 @@ class PengumumanController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title'        => 'required|string|max:255',
-            'content'      => 'required|string',
-            'is_published' => 'required|in:0,1',
-            'photo'        => 'nullable|image|max:5120',
-        ]);
-
-        $announcementId = DB::table('announcements')->insertGetId([
-            'title'        => $request->title,
-            'content'      => $request->content,
-            'is_published' => $request->is_published,
-            'created_by'   => auth()->user()->id,
-            'created_at'   => now(),
-            'updated_at'   => now(),
-        ]);
-
-        if ($request->hasFile('photo')) {
-            $file   = $request->file('photo');
-            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-            DB::table('photos')->insert([
-                'source_type' => 'announcement',
-                'source_id'   => $announcementId,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => $base64,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => auth()->user()->id,
-                'created_at'  => now(),
-                'updated_at'  => now(),
+        try {
+            $request->validate([
+                'title'        => 'required|string|max:255',
+                'content'      => 'required|string',
+                'is_published' => 'required|in:0,1',
+                'photo'        => 'nullable|image|max:5120',
             ]);
-        }
 
-        if ($request->hasFile('attachment_file')) {
-            $file = $request->file('attachment_file');
-            $path = $file->store('uploads/attachments/announcements', 'public');
-            DB::table('attachments')->insert([
-                'source_type'     => 'announcement',
-                'source_id'       => $announcementId,
-                'attachment_type' => 'file',
-                'file_name'       => $file->getClientOriginalName(),
-                'file_path'       => $path,
-                'file_type'       => $file->getMimeType(),
-                'file_size'       => $file->getSize(),
-                'label'           => $request->attachment_label ?? null,
-                'uploaded_by'     => auth()->user()->id,
-                'created_at'      => now(),
-                'updated_at'      => now(),
+            $announcementId = DB::table('announcements')->insertGetId([
+                'title'        => $request->title,
+                'content'      => $request->content,
+                'is_published' => $request->is_published,
+                'created_by'   => auth()->user()->id,
+                'created_at'   => now(),
+                'updated_at'   => now(),
             ]);
-        }
 
-        return back()->with('success', 'Pengumuman berhasil disimpan.');
+            if ($request->hasFile('photo')) {
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                DB::table('photos')->insert([
+                    'source_type' => 'announcement',
+                    'source_id'   => $announcementId,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => auth()->user()->id,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            if ($request->hasFile('attachment_file')) {
+                $file = $request->file('attachment_file');
+                $path = $file->store('uploads/attachments/announcements', 'public');
+                DB::table('attachments')->insert([
+                    'source_type'     => 'announcement',
+                    'source_id'       => $announcementId,
+                    'attachment_type' => 'file',
+                    'file_name'       => $file->getClientOriginalName(),
+                    'file_path'       => $path,
+                    'file_type'       => $file->getMimeType(),
+                    'file_size'       => $file->getSize(),
+                    'label'           => $request->attachment_label ?? null,
+                    'uploaded_by'     => auth()->user()->id,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+            }
+
+            return back()->with('success', 'Pengumuman berhasil disimpan.');
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+            ], 500);
+        }
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'title'        => 'required|string|max:255',
-            'content'      => 'required|string',
-            'is_published' => 'required|in:0,1',
-            'photo'        => 'nullable|image|max:5120',
-        ]);
+        try {
+            $request->validate([
+                'title'        => 'required|string|max:255',
+                'content'      => 'required|string',
+                'is_published' => 'required|in:0,1',
+                'photo'        => 'nullable|image|max:5120',
+            ]);
 
-        DB::table('announcements')->where('id', $id)->update([
-            'title'        => $request->title,
-            'content'      => $request->content,
-            'is_published' => $request->is_published,
-            'updated_at'   => now(),
-        ]);
+            DB::table('announcements')->where('id', $id)->update([
+                'title'        => $request->title,
+                'content'      => $request->content,
+                'is_published' => $request->is_published,
+                'updated_at'   => now(),
+            ]);
 
-        if ($request->hasFile('photo')) {
-            $oldPhoto = DB::table('photos')
-                ->where('source_type', 'announcement')
-                ->where('source_id', $id)
-                ->first();
+            if ($request->hasFile('photo')) {
+                $oldPhoto = DB::table('photos')
+                    ->where('source_type', 'announcement')
+                    ->where('source_id', $id)
+                    ->first();
 
-            if ($oldPhoto) {
-                if ($oldPhoto->file_path) {
-                    Storage::disk('public')->delete($oldPhoto->file_path);
+                if ($oldPhoto) {
+                    if ($oldPhoto->file_path) {
+                        Storage::disk('public')->delete($oldPhoto->file_path);
+                    }
+                    DB::table('photos')->where('id', $oldPhoto->id)->delete();
                 }
-                DB::table('photos')->where('id', $oldPhoto->id)->delete();
+
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+
+                DB::table('photos')->insert([
+                    'source_type' => 'announcement',
+                    'source_id'   => $id,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => auth()->user()->id,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
             }
 
-            $file   = $request->file('photo');
-            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+            return back()->with('success', 'Pengumuman berhasil diperbarui.');
 
-            DB::table('photos')->insert([
-                'source_type' => 'announcement',
-                'source_id'   => $id,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => $base64,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => auth()->user()->id,
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+            ], 500);
         }
-
-        return back()->with('success', 'Pengumuman berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
-        $photos = DB::table('photos')->where('source_type','announcement')->where('source_id',$id)->get();
-        foreach ($photos as $p) {
-            Storage::disk('public')->delete($p->file_path);
+        try {
+            $photos = DB::table('photos')->where('source_type', 'announcement')->where('source_id', $id)->get();
+            foreach ($photos as $p) {
+                Storage::disk('public')->delete($p->file_path);
+            }
+            DB::table('photos')->where('source_type', 'announcement')->where('source_id', $id)->delete();
+
+            $attachments = DB::table('attachments')->where('source_type', 'announcement')->where('source_id', $id)->get();
+            foreach ($attachments as $a) {
+                if ($a->file_path) Storage::disk('public')->delete($a->file_path);
+            }
+            DB::table('attachments')->where('source_type', 'announcement')->where('source_id', $id)->delete();
+
+            DB::table('announcements')->where('id', $id)->delete();
+
+            return back()->with('success', 'Pengumuman berhasil dihapus.');
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+            ], 500);
         }
-        DB::table('photos')->where('source_type','announcement')->where('source_id',$id)->delete();
-
-        $attachments = DB::table('attachments')->where('source_type','announcement')->where('source_id',$id)->get();
-        foreach ($attachments as $a) {
-            if ($a->file_path) Storage::disk('public')->delete($a->file_path);
-        }
-        DB::table('attachments')->where('source_type','announcement')->where('source_id',$id)->delete();
-
-        DB::table('announcements')->where('id', $id)->delete();
-
-        return back()->with('success', 'Pengumuman berhasil dihapus.');
     }
 
     public function toggleDraft($id)
     {
-        $ann = DB::table('announcements')->where('id', $id)->first();
-        if (!$ann) return back();
+        try {
+            $ann = DB::table('announcements')->where('id', $id)->first();
+            if (!$ann) return back();
 
-        DB::table('announcements')->where('id', $id)->update([
-            'is_published' => $ann->is_published ? 0 : 1,
-            'updated_at'   => now(),
-        ]);
+            DB::table('announcements')->where('id', $id)->update([
+                'is_published' => $ann->is_published ? 0 : 1,
+                'updated_at'   => now(),
+            ]);
 
-        return back()->with('success', $ann->is_published ? 'Pengumuman dijadikan draft.' : 'Pengumuman dipublikasi.');
+            return back()->with('success', $ann->is_published ? 'Pengumuman dijadikan draft.' : 'Pengumuman dipublikasi.');
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+            ], 500);
+        }
     }
 
     public function create()
