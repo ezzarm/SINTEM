@@ -53,7 +53,6 @@ class KalenderController extends Controller
         $total = $query->count();
         $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
-        // Attach photos
         foreach ($items as $item) {
             $photo = DB::table('photos')
                 ->where('source_type', 'event')
@@ -74,118 +73,141 @@ class KalenderController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'event_name'    => 'required|string|max:255',
-            'category_id'   => 'required|integer|exists:event_categories,id',
-            'location_id'   => 'nullable|integer|exists:event_locations,id',
-            'event_date'    => 'required|date',
-            'event_date_end'=> 'nullable|date|after_or_equal:event_date',
-            'description'   => 'nullable|string',
-            'is_published'  => 'required|in:0,1',
-            'photo'         => 'nullable|image|max:5120',
-        ]);
-
-        $eventId = DB::table('events')->insertGetId([
-            'event_name'    => $request->event_name,
-            'category_id'   => $request->category_id,
-            'location_id'   => $request->location_id ?: null,
-            'event_date'    => $request->event_date,
-            'event_date_end'=> $request->event_date_end ?: null,
-            'description'   => $request->description,
-            'is_published'  => $request->is_published,
-            'created_by'    => auth()->user()->id,
-            'created_at'    => now(),
-            'updated_at'    => now(),
-        ]);
-
-        if ($request->hasFile('photo')) {
-            $file   = $request->file('photo');
-            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-            DB::table('photos')->insert([
-                'source_type' => 'event',
-                'source_id'   => $eventId,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => $base64,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => auth()->user()->id,
-                'created_at'  => now(),
-                'updated_at'  => now(),
+        try {
+            $request->validate([
+                'event_name'     => 'required|string|max:255',
+                'category_id'    => 'required|integer|exists:event_categories,id',
+                'location_id'    => 'nullable|integer|exists:event_locations,id',
+                'event_date'     => 'required|date',
+                'event_date_end' => 'nullable|date|after_or_equal:event_date',
+                'description'    => 'nullable|string',
+                'is_published'   => 'required|in:0,1',
+                'photo'          => 'nullable|image|max:10240',
             ]);
-        }
 
-        return back()->with('success', 'Kegiatan berhasil disimpan.');
+            $eventId = DB::table('events')->insertGetId([
+                'event_name'     => $request->event_name,
+                'category_id'    => $request->category_id,
+                'location_id'    => $request->location_id ?: null,
+                'event_date'     => $request->event_date,
+                'event_date_end' => $request->event_date_end ?: null,
+                'description'    => $request->description,
+                'is_published'   => $request->is_published,
+                'created_by'     => auth()->user()->id,
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+
+            if ($request->hasFile('photo')) {
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                DB::table('photos')->insert([
+                    'source_type' => 'event',
+                    'source_id'   => $eventId,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => auth()->user()->id,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            return back()->with('success', 'Kegiatan berhasil disimpan.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menyimpan kegiatan: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'event_name'    => 'required|string|max:255',
-            'category_id'   => 'required|integer|exists:event_categories,id',
-            'location_id'   => 'nullable|integer|exists:event_locations,id',
-            'event_date'    => 'required|date',
-            'event_date_end'=> 'nullable|date|after_or_equal:event_date',
-            'description'   => 'nullable|string',
-            'is_published'  => 'required|in:0,1',
-            'photo'         => 'nullable|image|max:5120',
-        ]);
-
-        DB::table('events')->where('id', $id)->update([
-            'event_name'    => $request->event_name,
-            'category_id'   => $request->category_id,
-            'location_id'   => $request->location_id ?: null,
-            'event_date'    => $request->event_date,
-            'event_date_end'=> $request->event_date_end ?: null,
-            'description'   => $request->description,
-            'is_published'  => $request->is_published,
-            'updated_at'    => now(),
-        ]);
-
-        if ($request->hasFile('photo')) {
-            // Delete old photo
-            $old = DB::table('photos')->where('source_type','event')->where('source_id',$id)->first();
-            if ($old) {
-                DB::table('photos')->where('id', $old->id)->delete();
-            }
-            $file   = $request->file('photo');
-            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-            DB::table('photos')->insert([
-                'source_type' => 'event',
-                'source_id'   => $id,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => $base64,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => auth()->user()->id,
-                'created_at'  => now(),
-                'updated_at'  => now(),
+        try {
+            $request->validate([
+                'event_name'     => 'required|string|max:255',
+                'category_id'    => 'required|integer|exists:event_categories,id',
+                'location_id'    => 'nullable|integer|exists:event_locations,id',
+                'event_date'     => 'required|date',
+                'event_date_end' => 'nullable|date|after_or_equal:event_date',
+                'description'    => 'nullable|string',
+                'is_published'   => 'required|in:0,1',
+                'photo'          => 'nullable|image|max:10240',
             ]);
-        }
 
-        return back()->with('success', 'Kegiatan berhasil diperbarui.');
+            DB::table('events')->where('id', $id)->update([
+                'event_name'     => $request->event_name,
+                'category_id'    => $request->category_id,
+                'location_id'    => $request->location_id ?: null,
+                'event_date'     => $request->event_date,
+                'event_date_end' => $request->event_date_end ?: null,
+                'description'    => $request->description,
+                'is_published'   => $request->is_published,
+                'updated_at'     => now(),
+            ]);
+
+            if ($request->hasFile('photo')) {
+                $old = DB::table('photos')->where('source_type', 'event')->where('source_id', $id)->first();
+                if ($old) {
+                    DB::table('photos')->where('id', $old->id)->delete();
+                }
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                DB::table('photos')->insert([
+                    'source_type' => 'event',
+                    'source_id'   => $id,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => auth()->user()->id,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            return back()->with('success', 'Kegiatan berhasil diperbarui.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memperbarui kegiatan: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function destroy($id)
     {
-        DB::table('photos')->where('source_type','event')->where('source_id',$id)->delete();
-        DB::table('attachments')->where('source_type','event')->where('source_id',$id)->delete();
-        DB::table('events')->where('id', $id)->delete();
+        try {
+            DB::table('photos')->where('source_type', 'event')->where('source_id', $id)->delete();
+            DB::table('attachments')->where('source_type', 'event')->where('source_id', $id)->delete();
+            DB::table('events')->where('id', $id)->delete();
 
-        return back()->with('success', 'Kegiatan berhasil dihapus.');
+            return back()->with('success', 'Kegiatan berhasil dihapus.');
+
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menghapus kegiatan: ' . $e->getMessage());
+        }
     }
 
     public function toggle($id)
     {
-        $event = DB::table('events')->where('id', $id)->first();
-        if (!$event) return back();
+        try {
+            $event = DB::table('events')->where('id', $id)->first();
+            if (!$event) return back();
 
-        DB::table('events')->where('id', $id)->update([
-            'is_published' => $event->is_published ? 0 : 1,
-            'updated_at'   => now(),
-        ]);
+            DB::table('events')->where('id', $id)->update([
+                'is_published' => $event->is_published ? 0 : 1,
+                'updated_at'   => now(),
+            ]);
 
-        return back()->with('success', $event->is_published ? 'Kegiatan dijadikan draft.' : 'Kegiatan dipublikasi.');
+            return back()->with('success', $event->is_published ? 'Kegiatan dijadikan draft.' : 'Kegiatan dipublikasi.');
+
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal mengubah status: ' . $e->getMessage());
+        }
     }
 }

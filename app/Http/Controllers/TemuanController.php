@@ -75,33 +75,28 @@ class TemuanController extends Controller
     // ── SIMPAN LAPORAN TEMUAN ──
     public function store(Request $request)
     {
-        // 1. Validasi Input
         $request->validate([
             'type'        => 'required|in:found,lost',
             'item_name'   => 'required|string|max:100',
             'description' => 'nullable|string',
             'found_at'    => 'nullable|string|max:150',
-            'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
         ]);
 
-        // Gunakan Transaction agar jika salah satu gagal, semua batal (mencegah data kosong)
         DB::beginTransaction();
 
         try {
-            // 2. Insert ke Tabel lost_founds
-            // Pastikan nama kolom 'found_at' benar-benar ada di database kamu
             $lostFoundId = DB::table('lost_founds')->insertGetId([
-                'user_id'     => Auth::id(), // Menggunakan Auth::id() lebih singkat
+                'user_id'     => Auth::id(),
                 'type'        => $request->type,
                 'item_name'   => $request->item_name,
                 'description' => $request->description,
-                'found_at'    => $request->found_at, 
+                'found_at'    => $request->found_at,
                 'status'      => 'pending',
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);
 
-            // 3. Simpan Foto jika ada
             if ($request->hasFile('photo')) {
                 $file   = $request->file('photo');
                 $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
@@ -119,15 +114,13 @@ class TemuanController extends Controller
                 ]);
             }
 
-            DB::commit(); // Simpan permanen ke database
+            DB::commit();
 
             return redirect()->route('temuan.index')
                 ->with('success', 'Laporan berhasil dikirim dan menunggu persetujuan admin.');
 
         } catch (\Exception $e) {
-            DB::rollBack(); // Batalkan semua jika ada error
-            
-            // Log error ke storage/logs/laravel.log agar bisa kamu cek lewat CMD
+            DB::rollBack();
             Log::error('Gagal Simpan Temuan: ' . $e->getMessage());
 
             return back()

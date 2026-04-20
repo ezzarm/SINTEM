@@ -153,15 +153,21 @@ return new class extends Migration
 
         // lost_founds
         Schema::create('lost_founds', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('user_id')->comment('User who submitted the report');
+            $table->unsignedInteger('id')->autoIncrement();
+            $table->unsignedInteger('user_id')->comment('User who submitted the report');
             $table->enum('type', ['found', 'lost']);
             $table->string('item_name', 100);
             $table->string('found_at', 150)->nullable();
             $table->text('description')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('reject_reason')->nullable()->comment('Reason provided when admin rejects a lost/found report');
-            $table->timestamps();
+            $table->timestamp('created_at')->nullable()->useCurrent();
+            $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+
+            $table->index('user_id', 'idx_lost_founds_user_id');
+            $table->index('status', 'idx_lost_founds_status');
+            $table->foreign('user_id', 'fk_lost_founds_user')
+                ->references('id')->on('users')->onUpdate('cascade');
         });
     }
 

@@ -68,7 +68,7 @@ class PengumumanController extends Controller
                 'title'        => 'required|string|max:255',
                 'content'      => 'required|string',
                 'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|max:5120',
+                'photo'        => 'nullable|image|max:10240',
             ]);
 
             $announcementId = DB::table('announcements')->insertGetId([
@@ -117,12 +117,10 @@ class PengumumanController extends Controller
 
             return back()->with('success', 'Pengumuman berhasil disimpan.');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ], 500);
+            return back()->with('error', 'Gagal menyimpan pengumuman: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -133,7 +131,7 @@ class PengumumanController extends Controller
                 'title'        => 'required|string|max:255',
                 'content'      => 'required|string',
                 'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|max:5120',
+                'photo'        => 'nullable|image|max:10240',
             ]);
 
             DB::table('announcements')->where('id', $id)->update([
@@ -175,12 +173,10 @@ class PengumumanController extends Controller
 
             return back()->with('success', 'Pengumuman berhasil diperbarui.');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ], 500);
+            return back()->with('error', 'Gagal memperbarui pengumuman: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -189,7 +185,7 @@ class PengumumanController extends Controller
         try {
             $photos = DB::table('photos')->where('source_type', 'announcement')->where('source_id', $id)->get();
             foreach ($photos as $p) {
-                Storage::disk('public')->delete($p->file_path);
+                if ($p->file_path) Storage::disk('public')->delete($p->file_path);
             }
             DB::table('photos')->where('source_type', 'announcement')->where('source_id', $id)->delete();
 
@@ -204,11 +200,7 @@ class PengumumanController extends Controller
             return back()->with('success', 'Pengumuman berhasil dihapus.');
 
         } catch (\Throwable $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ], 500);
+            return back()->with('error', 'Gagal menghapus pengumuman: ' . $e->getMessage());
         }
     }
 
@@ -226,11 +218,7 @@ class PengumumanController extends Controller
             return back()->with('success', $ann->is_published ? 'Pengumuman dijadikan draft.' : 'Pengumuman dipublikasi.');
 
         } catch (\Throwable $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ], 500);
+            return back()->with('error', 'Gagal mengubah status: ' . $e->getMessage());
         }
     }
 

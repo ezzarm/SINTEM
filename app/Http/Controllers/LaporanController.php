@@ -17,55 +17,63 @@ class LaporanController extends Controller
     // GET /laporan/buat
     public function create()
     {
-        return view('laporan.buat');
+        $categories = DB::table('report_categories')->orderBy('id')->get();
+        return view('laporan.buat', compact('categories'));
     }
 
     // POST /laporan/buat (Proses Simpan Anonim)
     public function store(Request $request)
     {
-        $request->validate([
-            'category_id'    => 'required|integer|exists:report_categories,id',
-            'report_content' => 'required|string',
-            'photo'          => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
-        ]);
-
-        // Generate Ticket Number
-        $lastId = DB::table('anonymous_reports')->max('id') ?? 0;
-        $ticket = 'TKT-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
-
-        $reportId = DB::table('anonymous_reports')->insertGetId([
-            'ticket_number'  => $ticket,
-            'category_id'    => $request->category_id,
-            'report_content' => $request->report_content,
-            'status'         => 'pending',
-            'created_at'     => now(),
-            'updated_at'     => now(),
-        ]);
-
-        if ($request->hasFile('photo')) {
-            $file   = $request->file('photo');
-            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-            DB::table('photos')->insert([
-                'source_type' => 'anonymous_report',
-                'source_id'   => $reportId,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => $base64,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => null,
-                'created_at'  => now(),
-                'updated_at'  => now(),
+        try {
+            $request->validate([
+                'category_id'    => 'required|integer|exists:report_categories,id',
+                'report_content' => 'required|string',
+                'photo'          => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
             ]);
+
+            // Generate Ticket Number
+            $lastId = DB::table('anonymous_reports')->max('id') ?? 0;
+            $ticket = 'TKT-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
+
+            $reportId = DB::table('anonymous_reports')->insertGetId([
+                'ticket_number'  => $ticket,
+                'category_id'    => $request->category_id,
+                'report_content' => $request->report_content,
+                'status'         => 'pending',
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+
+            if ($request->hasFile('photo')) {
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                DB::table('photos')->insert([
+                    'source_type' => 'anonymous_report',
+                    'source_id'   => $reportId,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => null,
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            // Simpan tiket ke session
+            $tickets   = session('my_tickets', []);
+            $tickets[] = $ticket;
+            session(['my_tickets' => $tickets]);
+
+            return redirect()->route('laporan.anonim')
+                ->with('success', "Laporan anonim berhasil dikirim. Nomor tiket: {$ticket}");
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal mengirim laporan: ' . $e->getMessage())->withInput();
         }
-
-        // Simpan tiket ke session
-        $tickets   = session('my_tickets', []);
-        $tickets[] = $ticket;
-        session(['my_tickets' => $tickets]);
-
-        return redirect()->route('laporan.anonim')
-            ->with('success', "Laporan anonim berhasil dikirim. Nomor tiket: {$ticket}");
     }
 
     // GET /laporan/anonim (Daftar Laporan Anonim User)
@@ -140,7 +148,6 @@ class LaporanController extends Controller
         $query->orderBy('created_at', $sort === 'terlama' ? 'asc' : 'desc');
         $items = $query->paginate(15);
 
-        // Map foto
         $ids = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
@@ -158,97 +165,111 @@ class LaporanController extends Controller
     // POST /laporan/temuan (Proses Simpan Temuan/Kehilangan)
     public function storeTemuan(Request $request)
     {
-        $request->validate([
-            'type'        => 'required|in:found,lost',
-            'item_name'   => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'found_at'    => 'nullable|string|max:150',
-            'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
-        ]);
+        try {
+            $request->validate([
+                'type'        => 'required|in:found,lost',
+                'item_name'   => 'required|string|max:100',
+                'description' => 'nullable|string',
+                'found_at'    => 'nullable|string|max:150',
+                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+            ]);
 
-        $reportId = DB::table('lost_founds')->insertGetId([
-            'user_id'     => Auth::id(),
-            'type'        => $request->type,
-            'item_name'   => $request->item_name,
-            'description' => $request->description,
-            'found_at'    => $request->found_at,
-            'status'      => 'pending',
-            'created_at'  => now(),
-            'updated_at'  => now(),
-        ]);
-
-        if ($request->hasFile('photo')) {
-            $file   = $request->file('photo');
-            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-            DB::table('photos')->insert([
-                'source_type' => 'lost_found',
-                'source_id'   => $reportId,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => $base64,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => Auth::id(),
+            $reportId = DB::table('lost_founds')->insertGetId([
+                'user_id'     => Auth::id(),
+                'type'        => $request->type,
+                'item_name'   => $request->item_name,
+                'description' => $request->description,
+                'found_at'    => $request->found_at,
+                'status'      => 'pending',
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ]);
-        }
 
-        return redirect()->route('laporan.temuan')->with('success', 'Laporan Temuan/Kehilangan berhasil diposting.');
+            if ($request->hasFile('photo')) {
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                DB::table('photos')->insert([
+                    'source_type' => 'lost_found',
+                    'source_id'   => $reportId,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            return redirect()->route('laporan.temuan')->with('success', 'Laporan Temuan/Kehilangan berhasil diposting.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menyimpan laporan: ' . $e->getMessage())->withInput();
+        }
     }
 
     // PUT /temuan/{id}
     public function updateTemuan(Request $request, $id)
     {
-        $request->validate([
-            'type'        => 'required|in:found,lost',
-            'item_name'   => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'found_at'    => 'nullable|string|max:150',
-            'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
-        ]);
+        try {
+            $request->validate([
+                'type'        => 'required|in:found,lost',
+                'item_name'   => 'required|string|max:100',
+                'description' => 'nullable|string',
+                'found_at'    => 'nullable|string|max:150',
+                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+            ]);
 
-        $report = DB::table('lost_founds')
-            ->where('id', $id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'pending')
-            ->first();
+            $report = DB::table('lost_founds')
+                ->where('id', $id)
+                ->where('user_id', Auth::id())
+                ->where('status', 'pending')
+                ->first();
 
-        if (!$report) {
-            return redirect()->route('laporan.temuan')->with('error', 'Laporan tidak ditemukan.');
-        }
+            if (!$report) {
+                return redirect()->route('laporan.temuan')->with('error', 'Laporan tidak ditemukan.');
+            }
 
-        DB::table('lost_founds')->where('id', $id)->update([
-            'type'        => $request->type,
-            'item_name'   => $request->item_name,
-            'description' => $request->description,
-            'found_at'    => $request->found_at,
-            'updated_at'  => now(),
-        ]);
-
-        if ($request->hasFile('photo')) {
-            DB::table('photos')
-                ->where('source_type', 'lost_found')
-                ->where('source_id', $id)
-                ->delete();
-
-            $file   = $request->file('photo');
-            $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-            DB::table('photos')->insert([
-                'source_type' => 'lost_found',
-                'source_id'   => $id,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => $base64,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => Auth::id(),
-                'created_at'  => now(),
+            DB::table('lost_founds')->where('id', $id)->update([
+                'type'        => $request->type,
+                'item_name'   => $request->item_name,
+                'description' => $request->description,
+                'found_at'    => $request->found_at,
                 'updated_at'  => now(),
             ]);
-        }
 
-        return redirect()->route('laporan.temuan')->with('success', 'Laporan berhasil diperbarui.');
+            if ($request->hasFile('photo')) {
+                DB::table('photos')
+                    ->where('source_type', 'lost_found')
+                    ->where('source_id', $id)
+                    ->delete();
+
+                $file   = $request->file('photo');
+                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                DB::table('photos')->insert([
+                    'source_type' => 'lost_found',
+                    'source_id'   => $id,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => $file->getMimeType(),
+                    'file_size'   => $file->getSize(),
+                    'uploaded_by' => Auth::id(),
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            }
+
+            return redirect()->route('laporan.temuan')->with('success', 'Laporan berhasil diperbarui.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memperbarui laporan: ' . $e->getMessage())->withInput();
+        }
     }
 
     // DELETE /temuan/{id}

@@ -17,11 +17,17 @@ while ! mysqladmin ping -h"$DB_HOST" -P"${DB_PORT:-3306}" -u"$DB_USERNAME" -p"$D
 done
 echo "==> [bootstrap] MySQL is ready."
 
-# ── 2. Run migrations ───────────────────────────────────────
+# ── 2. Increase max_allowed_packet for base64 photo storage ─
+echo "==> [bootstrap] Setting MySQL max_allowed_packet to 64MB..."
+mysql -h"$DB_HOST" -P"${DB_PORT:-3306}" -u"$DB_USERNAME" -p"$DB_PASSWORD" \
+    -e "SET GLOBAL max_allowed_packet=67108864;" 2>/dev/null || \
+    echo "   WARNING: Could not set max_allowed_packet (may need SUPER privilege). Continuing..."
+
+# ── 3. Run migrations ───────────────────────────────────────
 echo "==> [bootstrap] Running migrations..."
 php artisan migrate --force
 
-# ── 3. Seed only on first deploy (users table empty) ────────
+# ── 4. Seed only on first deploy (users table empty) ────────
 USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1)
 if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
     echo "==> [bootstrap] Seeding initial data..."
