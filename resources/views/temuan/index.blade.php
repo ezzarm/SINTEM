@@ -254,7 +254,7 @@
                     @php $photo = isset($photoMap) ? ($photoMap[$item->id] ?? null) : null; @endphp
                     @if($photo)
                     <div class="pg-image">
-                        <img src="{{ asset('storage/' . $photo->file_path) }}" alt="{{ $item->item_name }}" onerror="this.parentElement.style.display='none'">
+                        <img src="{{ $photo->file_data ?: asset('storage/' . $photo->file_path) }}" alt="{{ $item->item_name }}" onerror="this.parentElement.style.display='none'">
                     </div>
                     @endif
                 </div>
