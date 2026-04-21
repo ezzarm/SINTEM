@@ -149,6 +149,7 @@
         width: 248px;
         min-width: 248px;
         height: 100vh;
+        height: 100dvh; /* FIX: real viewport height on iOS */
         position: sticky;
         top: 0;
         display: flex;
@@ -159,6 +160,7 @@
         font-family: 'Lato', sans-serif;
         overflow-y: auto;
         overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
         /* ── mobile: starts off-screen ── */
         transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
@@ -375,6 +377,8 @@
     @media (max-width: 1023px) {
         .sintem-sidebar {
             position: fixed;
+            height: 100vh;
+            height: 100dvh; /* FIX: real viewport height on iOS */
             top: 0;
             left: 0;
             z-index: 200;

@@ -85,7 +85,7 @@
     .adm-per-page-select:focus { border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,0.1); }
 
     /* Table */
-    .adm-body { flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none; }
+    .adm-body { flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none; }
     .adm-body::-webkit-scrollbar { display:none; }
     .adm-table-wrap { padding:20px 32px 32px; }
     table { width:100%;border-collapse:collapse; }
@@ -174,7 +174,7 @@
 
     /* ══ EDIT SIDE PANEL — full height, right side, like detail laporan ══ */
     .edit-panel {
-        position:fixed;right:-500px;top:0;bottom:0;
+        position:fixed;right:-500px;top:0;height:100vh;height:100dvh;
         width:420px;max-width:100vw;background:#fff;
         box-shadow:-4px 0 32px rgba(0,0,0,0.12);
         z-index:300;display:flex;flex-direction:column;
@@ -197,7 +197,7 @@
     .ep-icon-btn:hover       { background:#f4f0ff;color:#4f28d9;border-color:#c4b5fd; }
     .ep-icon-btn.close:hover { background:#fef2f2;color:#dc2626;border-color:#fecaca; }
 
-    .ep-body { flex:1;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none; }
+    .ep-body { flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none; }
     .ep-body::-webkit-scrollbar { display:none; }
 
     /* Photo at top of panel */
@@ -322,6 +322,39 @@
         .adm-toolbar { flex-direction: column; align-items: stretch; }
         table        { min-width: 520px; }
     }
+    /* ── Mobile: release adm-body fixed-flex so content not cropped ── */
+    @media (max-width: 767px) {
+        .adm-body    { overflow-y: auto; min-height: 200px; flex: 1; }
+        .page-body   { overflow-y: auto !important; }
+    }
+
+    /* ── Mobile: panel full-width, safe area padding for keyboard + notch ── */
+    @media (max-width: 767px) {
+        .edit-panel, .detail-panel {
+            width: 100% !important;
+            max-width: 100vw !important;
+            right: -100vw !important;
+            /* Add bottom padding so ep-foot / save buttons are above keyboard */
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .edit-panel.open, .detail-panel.open {
+            right: 0 !important;
+        }
+        .ep-body, .dp-body, .panel-body {
+            -webkit-overflow-scrolling: touch;
+            /* Extra bottom padding so last field isn't under keyboard */
+            padding-bottom: 80px !important;
+        }
+        .ep-foot {
+            /* Keep save button visible above keyboard on iOS */
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            z-index: 10;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        }
+    }
+
 </style>
 @endpush
 

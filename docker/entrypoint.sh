@@ -25,6 +25,8 @@ DB_PASSWORD=${DB_PASSWORD:-}
 SESSION_DRIVER=${SESSION_DRIVER:-database}
 SESSION_LIFETIME=${SESSION_LIFETIME:-120}
 SESSION_ENCRYPT=${SESSION_ENCRYPT:-false}
+# FIX: Default to true in production (Docker/Railway uses HTTPS via proxy).
+# The .env file in local dev sets this to false independently.
 SESSION_SECURE_COOKIE=${SESSION_SECURE_COOKIE:-true}
 SESSION_SAME_SITE=${SESSION_SAME_SITE:-lax}
 TRUSTED_PROXIES=*

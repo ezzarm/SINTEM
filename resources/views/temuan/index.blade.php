@@ -68,7 +68,7 @@
     /* ── Two-column layout ── */
     .pg-columns { flex: 1; min-height: 0; display: flex; gap: 0; overflow: hidden; }
     .pg-main {
-        flex: 1; min-width: 0; overflow-y: auto;
+        flex: 1; min-width: 0; overflow-y: auto;-webkit-overflow-scrolling:touch;
         padding: 16px 24px 32px 32px; display: flex; flex-direction: column; gap: 8px;
         scrollbar-width: none; -ms-overflow-style: none;
     }
@@ -153,6 +153,13 @@
         .pg-post             { padding: 12px; gap: 10px; }
         .pg-avatar           { width: 28px; height: 28px; }
     }
+    /* ── Mobile: release fixed-height flex chain so content is not cropped ── */
+    @media (max-width: 767px) {
+        .pg-wrap     { overflow: visible; min-height: 0; }
+        .pg-columns  { overflow: visible; flex-wrap: wrap; min-height: 0; }
+        .pg-main     { overflow-y: visible; min-height: 300px; }
+    }
+
 </style>
 @endpush
 

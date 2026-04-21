@@ -15,22 +15,32 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body { height: 100%; overflow: hidden; }
-
+        /* FIX: Removed overflow:hidden from html/body — clips content on mobile when
+           virtual keyboard appears, causing forms/modals to be unreachable. */
+        html { height: 100%; }
         body {
             font-family: 'Lato', sans-serif;
             background: #ffffff;
             display: flex;
+            min-height: 100%;
+            min-height: -webkit-fill-available;
         }
 
         /* ── Layout shell — identical to admin layout ── */
-        .layout-wrap { display: flex; width: 100%; height: 100vh; overflow: hidden; }
+        .layout-wrap {
+            display: flex; width: 100%;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+        }
 
         /* ── Main area ── */
         .main-content {
-            flex: 1; min-width: 0; height: 100vh;
-            overflow: hidden; display: flex; flex-direction: column;
+            flex: 1; min-width: 0;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            display: flex; flex-direction: column;
             background: #ffffff;
+            overflow: hidden;
         }
 
         /* ── Mobile overlay backdrop ── */

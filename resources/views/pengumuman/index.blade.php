@@ -72,7 +72,7 @@
 
     /* ── Left: only this scrolls, no scrollbar ── */
     .pg-main {
-        flex: 1; min-width: 0; overflow-y: auto;
+        flex: 1; min-width: 0; overflow-y: auto;-webkit-overflow-scrolling:touch;
         padding: 16px 24px 32px 32px; display: flex; flex-direction: column; gap: 8px;
         scrollbar-width: none; -ms-overflow-style: none;
     }
@@ -152,6 +152,13 @@
         .pg-main         { padding: 10px 12px 16px; }
         .pg-post         { padding: 12px; gap: 10px; }
     }
+    /* ── Mobile: release fixed-height flex chain so content is not cropped ── */
+    @media (max-width: 767px) {
+        .pg-wrap     { overflow: visible; min-height: 0; }
+        .pg-columns  { overflow: visible; flex-wrap: wrap; min-height: 0; }
+        .pg-main     { overflow-y: visible; min-height: 300px; }
+    }
+
 </style>
 @endpush
 

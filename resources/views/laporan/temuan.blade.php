@@ -40,7 +40,7 @@
     .adm-search:focus { border-color:#7c3aed; box-shadow:0 0 0 2px rgba(124,58,237,0.1); }
 
     /* ── Body + table ── */
-    .adm-body { flex:1; min-height:0; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; }
+    .adm-body { flex:1; min-height:0; overflow-y:auto;-webkit-overflow-scrolling:touch; scrollbar-width:none; -ms-overflow-style:none; }
     .adm-body::-webkit-scrollbar { display:none; }
     .adm-table-wrap { padding:20px 32px 32px; }
     table { width:100%; border-collapse:collapse; }
@@ -219,6 +219,39 @@
         .adm-toolbar { flex-direction: column; align-items: stretch; }
         table { min-width: 520px; }
     }
+    /* ── Mobile: release adm-body fixed-flex so content not cropped ── */
+    @media (max-width: 767px) {
+        .adm-body    { overflow-y: auto; min-height: 200px; flex: 1; }
+        .page-body   { overflow-y: auto !important; }
+    }
+
+    /* ── Mobile: panel full-width, safe area padding for keyboard + notch ── */
+    @media (max-width: 767px) {
+        .edit-panel, .detail-panel {
+            width: 100% !important;
+            max-width: 100vw !important;
+            right: -100vw !important;
+            /* Add bottom padding so ep-foot / save buttons are above keyboard */
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .edit-panel.open, .detail-panel.open {
+            right: 0 !important;
+        }
+        .ep-body, .dp-body, .panel-body {
+            -webkit-overflow-scrolling: touch;
+            /* Extra bottom padding so last field isn't under keyboard */
+            padding-bottom: 80px !important;
+        }
+        .ep-foot {
+            /* Keep save button visible above keyboard on iOS */
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            z-index: 10;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        }
+    }
+
 </style>
 @endpush
 

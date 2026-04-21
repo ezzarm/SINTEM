@@ -14,34 +14,42 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body {
+        html {
+            /* FIX: Let html be scrollable as fallback; individual sections manage overflow */
             height: 100%;
-            overflow: hidden; /* prevent body scroll — pages handle their own */
         }
 
         body {
             font-family: 'Lato', sans-serif;
             background: #ffffff;
             display: flex;
+            /* FIX: Remove overflow:hidden from body — it clips content on mobile when the
+               virtual keyboard appears, causing forms/modals to be unreachable.
+               Pages that need full-bleed scroll-locked layouts do this themselves via .page-body. */
+            min-height: 100%;
+            min-height: -webkit-fill-available; /* Safari iOS: real viewport height */
         }
 
         /* ── Layout shell: sidebar + main side-by-side ── */
         .layout-wrap {
             display: flex;
             width: 100%;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            min-height: -webkit-fill-available; /* fix Safari iOS viewport */
         }
 
-        /* ── Main area: fixed height, no scroll ── */
+        /* ── Main area ── */
         .main-content {
             flex: 1;
             min-width: 0;
-            height: 100vh;
-            overflow: hidden;
+            /* FIX: Don't lock to 100vh — on mobile this clips below the browser chrome.
+               Use min-height so it fills space but can grow. */
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
             background: #ffffff;
+            overflow: hidden; /* each page's .page-body handles its own scroll */
         }
 
         /* ── Fixed top sections (topbar + page header) ── */
@@ -71,6 +79,8 @@
             padding: 28px 32px;
             background: #ffffff;
             overflow-y: auto;
+            /* FIX: Enable momentum scrolling on iOS so panels and lists scroll smoothly */
+            -webkit-overflow-scrolling: touch;
             width: 100%;
         }
 
