@@ -49,7 +49,12 @@ class PengumumanController extends Controller
             $item->photos = DB::table('photos')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $item->id)
-                ->get();
+                ->get()
+                ->map(function ($p) {
+                    // FIX: Tambahkan photo_url dari file_path
+                    $p->photo_url = $p->file_path ? Storage::url($p->file_path) : null;
+                    return $p;
+                });
             $item->attachments = DB::table('attachments')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $item->id)
@@ -68,7 +73,7 @@ class PengumumanController extends Controller
                 'title'        => 'required|string|max:255',
                 'content'      => 'required|string',
                 'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|max:10240',
+                'photo'        => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
             ]);
 
             $announcementId = DB::table('announcements')->insertGetId([
@@ -81,14 +86,15 @@ class PengumumanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $file   = $request->file('photo');
-                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                $file = $request->file('photo');
+                // FIX: Simpan ke storage/public, bukan base64 ke DB
+                $path = $file->store('uploads/photos/announcements', 'public');
                 DB::table('photos')->insert([
                     'source_type' => 'announcement',
                     'source_id'   => $announcementId,
                     'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => '',
-                    'file_data'   => $base64,
+                    'file_path'   => $path,
+                    'file_data'   => null,
                     'file_type'   => $file->getMimeType(),
                     'file_size'   => $file->getSize(),
                     'uploaded_by' => auth()->user()->id,
@@ -131,7 +137,7 @@ class PengumumanController extends Controller
                 'title'        => 'required|string|max:255',
                 'content'      => 'required|string',
                 'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|max:10240',
+                'photo'        => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
             ]);
 
             DB::table('announcements')->where('id', $id)->update([
@@ -148,21 +154,20 @@ class PengumumanController extends Controller
                     ->first();
 
                 if ($oldPhoto) {
-                    if ($oldPhoto->file_path) {
-                        Storage::disk('public')->delete($oldPhoto->file_path);
-                    }
+                    // FIX: Hapus file lama dari storage
+                    if ($oldPhoto->file_path) Storage::disk('public')->delete($oldPhoto->file_path);
                     DB::table('photos')->where('id', $oldPhoto->id)->delete();
                 }
 
-                $file   = $request->file('photo');
-                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-
+                $file = $request->file('photo');
+                // FIX: Simpan ke storage/public, bukan base64 ke DB
+                $path = $file->store('uploads/photos/announcements', 'public');
                 DB::table('photos')->insert([
                     'source_type' => 'announcement',
                     'source_id'   => $id,
                     'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => '',
-                    'file_data'   => $base64,
+                    'file_path'   => $path,
+                    'file_data'   => null,
                     'file_type'   => $file->getMimeType(),
                     'file_size'   => $file->getSize(),
                     'uploaded_by' => auth()->user()->id,
