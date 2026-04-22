@@ -22,7 +22,7 @@ APP_DEBUG="${APP_DEBUG:-true}"
 APP_URL="${APP_URL:-http://localhost}"
 
 LOG_CHANNEL=stderr
-LOG_LEVEL="${LOG_LEVEL:-error}"
+LOG_LEVEL="${LOG_LEVEL:-debug}"
 
 DB_CONNECTION=mysql
 DB_HOST=${_DB_HOST}

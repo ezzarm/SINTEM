@@ -22,11 +22,12 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        // ── Prevent accidental APP_DEBUG=true in production ───────────
-        if ($this->app->environment('production') && config('app.debug')) {
-            Log::critical('APP_DEBUG is true in production! Forcing to false.');
-            config(['app.debug' => false]);
-        }
+        // ── Allow APP_DEBUG=true in production for Railway debugging ──
+        // Uncomment the block below AFTER debugging is complete:
+        // if ($this->app->environment('production') && config('app.debug')) {
+        //     Log::critical('APP_DEBUG is true in production! Forcing to false.');
+        //     config(['app.debug' => false]);
+        // }
 
         // ── Log slow DB queries (> 2 seconds) in production ───────────
         if ($this->app->environment('production')) {

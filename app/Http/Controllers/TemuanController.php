@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Helpers\PhotoHelper;
 
 class TemuanController extends Controller
@@ -24,7 +25,6 @@ class TemuanController extends Controller
         if ($type && $type !== 'all') {
             $query->where('lost_founds.type', $type);
         }
-
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('lost_founds.item_name', 'like', "%{$search}%")
@@ -41,24 +41,14 @@ class TemuanController extends Controller
             $photoMap = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
-                ->get()
-                ->keyBy('source_id')
-                ->toArray();
+                ->get()->keyBy('source_id')->toArray();
         }
 
         $recentAnnouncements = DB::table('announcements')
-            ->where('is_published', 1)
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get()
-            ->toArray();
+            ->where('is_published', 1)->orderByDesc('created_at')->limit(5)->get()->toArray();
 
         $recentEvents = DB::table('events')
-            ->where('is_published', 1)
-            ->orderByDesc('event_date')
-            ->limit(5)
-            ->get()
-            ->toArray();
+            ->where('is_published', 1)->orderByDesc('event_date')->limit(5)->get()->toArray();
 
         return view('temuan.index', compact(
             'items', 'sort', 'search', 'type',
@@ -73,17 +63,17 @@ class TemuanController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'type'        => 'required|in:found,lost',
-            'item_name'   => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'found_at'    => 'nullable|string|max:150',
-            'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
-        ]);
-
-        DB::beginTransaction();
-
         try {
+            $request->validate([
+                'type'        => 'required|in:found,lost',
+                'item_name'   => 'required|string|max:100',
+                'description' => 'nullable|string',
+                'found_at'    => 'nullable|string|max:150',
+                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+            ]);
+
+            DB::beginTransaction();
+
             $lostFoundId = DB::table('lost_founds')->insertGetId([
                 'user_id'     => Auth::id(),
                 'type'        => $request->type,
@@ -96,7 +86,9 @@ class TemuanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
+                Log::info('[Temuan.store] uploading photo for lost_found id='.$lostFoundId);
                 PhotoHelper::store($request->file('photo'), 'lost_found', $lostFoundId, Auth::id());
+                Log::info('[Temuan.store] photo stored OK');
             }
 
             DB::commit();
@@ -106,10 +98,9 @@ class TemuanController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Gagal Simpan Temuan: ' . $e->getMessage());
-
+            Log::error('[Temuan.store] FAILED: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
             return back()
-                ->with('error', 'Gagal simpan ke database: ' . $e->getMessage())
+                ->with('error', 'Gagal menyimpan laporan: ' . $e->getMessage())
                 ->withInput();
         }
     }
