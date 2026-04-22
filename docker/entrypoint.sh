@@ -5,8 +5,15 @@ echo "==> [entrypoint] Starting SINTEM..."
 cd /var/www/html
 
 # ─────────────────────────────────────────────────────────────
-# 1. Write .env from Railway environment variables
+# 1. Write .env — support both Railway MySQL plugin vars and custom DB_* vars
 # ─────────────────────────────────────────────────────────────
+# Railway MySQL plugin injects: MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE
+_DB_HOST="${MYSQLHOST:-${DB_HOST:-127.0.0.1}}"
+_DB_PORT="${MYSQLPORT:-${DB_PORT:-3306}}"
+_DB_USER="${MYSQLUSER:-${MYSQLUSER:-${DB_USERNAME:-root}}}"
+_DB_PASS="${MYSQLPASSWORD:-${DB_PASSWORD:-}}"
+_DB_NAME="${MYSQLDATABASE:-${DB_DATABASE:-sintem}}"
+
 cat > /var/www/html/.env << ENVEOF
 APP_NAME="${APP_NAME:-SINTEM}"
 APP_ENV="${APP_ENV:-production}"
@@ -18,11 +25,11 @@ LOG_CHANNEL=stderr
 LOG_LEVEL="${LOG_LEVEL:-error}"
 
 DB_CONNECTION=mysql
-DB_HOST=${DB_HOST:-127.0.0.1}
-DB_PORT=${DB_PORT:-3306}
-DB_DATABASE=${DB_DATABASE:-sintem}
-DB_USERNAME=${DB_USERNAME:-root}
-DB_PASSWORD=${DB_PASSWORD:-}
+DB_HOST=${_DB_HOST}
+DB_PORT=${_DB_PORT}
+DB_DATABASE=${_DB_NAME}
+DB_USERNAME=${_DB_USER}
+DB_PASSWORD=${_DB_PASS}
 
 SESSION_DRIVER=${SESSION_DRIVER:-database}
 SESSION_LIFETIME=${SESSION_LIFETIME:-120}
@@ -47,13 +54,26 @@ if [ -z "$APP_KEY" ]; then
 fi
 
 # ─────────────────────────────────────────────────────────────
-# 3. Wait for MySQL
+# 3. Wait for MySQL using PHP (works with Railway proxy + SSL)
+#    mysqladmin fails on Railway because the proxy requires a full
+#    TCP handshake that mysqladmin's ping doesn't complete properly.
 # ─────────────────────────────────────────────────────────────
-echo "==> [entrypoint] Waiting for MySQL at ${DB_HOST:-127.0.0.1}..."
+echo "==> [entrypoint] Waiting for MySQL at ${_DB_HOST}:${_DB_PORT}..."
 max_tries=40
 count=0
-while ! mysqladmin ping -h"${DB_HOST:-127.0.0.1}" -P"${DB_PORT:-3306}" \
-        -u"$DB_USERNAME" -p"$DB_PASSWORD" --silent 2>/dev/null; do
+until php -r "
+    try {
+        \$pdo = new PDO(
+            'mysql:host=${_DB_HOST};port=${_DB_PORT};dbname=${_DB_NAME}',
+            '${_DB_USER}',
+            '${_DB_PASS}',
+            [PDO::ATTR_TIMEOUT => 5, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
+        exit(0);
+    } catch (Exception \$e) {
+        exit(1);
+    }
+" 2>/dev/null; do
     count=$((count + 1))
     if [ $count -ge $max_tries ]; then
         echo "ERROR: MySQL not reachable after $max_tries attempts. Aborting."
@@ -97,15 +117,14 @@ mkdir -p storage/logs
 mkdir -p bootstrap/cache
 
 # ─────────────────────────────────────────────────────────────
-# 7. Create storage symlink
+# 7. Create storage symlink (remove existing dir first to avoid conflict)
 # ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Linking storage..."
-# Remove existing public/storage whether it's a dir or symlink
 rm -rf public/storage
 php artisan storage:link --force
 
 # ─────────────────────────────────────────────────────────────
-# 8. Warm up caches (AFTER .env is written and DB is ready)
+# 8. Warm caches AFTER .env + DB are ready
 # ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Warming caches..."
 php artisan config:cache
@@ -121,6 +140,6 @@ chmod -R 775 storage bootstrap/cache
 echo "==> [entrypoint] Bootstrap complete. Starting services..."
 
 # ─────────────────────────────────────────────────────────────
-# 10. Start nginx + php-fpm via supervisord
+# 10. Start nginx + php-fpm
 # ─────────────────────────────────────────────────────────────
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
