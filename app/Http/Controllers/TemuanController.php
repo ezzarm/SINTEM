@@ -104,7 +104,7 @@ class TemuanController extends Controller
             return redirect()->route('temuan.index')
                 ->with('success', 'Laporan berhasil dikirim dan menunggu persetujuan admin.');
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal Simpan Temuan: ' . $e->getMessage());
 

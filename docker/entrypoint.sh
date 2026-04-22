@@ -18,7 +18,7 @@ cat > /var/www/html/.env << ENVEOF
 APP_NAME="${APP_NAME:-SINTEM}"
 APP_ENV="${APP_ENV:-production}"
 APP_KEY="${APP_KEY:-}"
-APP_DEBUG="${APP_DEBUG:-false}"
+APP_DEBUG="${APP_DEBUG:-true}"
 APP_URL="${APP_URL:-http://localhost}"
 
 LOG_CHANNEL=stderr
@@ -88,7 +88,7 @@ echo "==> [entrypoint] MySQL is ready."
 # 4. Run migrations
 # ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Running migrations..."
-php artisan migrate --force
+php artisan migrate --force 2>&1
 
 # ─────────────────────────────────────────────────────────────
 # 5. Seed on first deploy only
