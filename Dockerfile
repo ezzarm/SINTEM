@@ -82,11 +82,8 @@ COPY docker/php.ini          /usr/local/etc/php/conf.d/laravel.ini
 COPY docker/php-fpm.conf     /usr/local/etc/php-fpm.d/www.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh    /entrypoint.sh
-# ↓ only change #1
-COPY docker/bootstrap.sh     /bootstrap.sh
 
-# ↓ only change #2 — added /bootstrap.sh to chmod
-RUN chmod +x /entrypoint.sh /bootstrap.sh artisan \
+RUN chmod +x /entrypoint.sh artisan \
  && mkdir -p storage/app/public \
              storage/framework/cache \
              storage/framework/sessions \
