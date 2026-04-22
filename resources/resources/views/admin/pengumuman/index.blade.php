@@ -457,10 +457,10 @@
                                         'title'        => $item->title,
                                         'content'      => $item->content,
                                         'is_published' => $item->is_published,
-                                        'photo'        => optional($item->photos->first())->file_path
-                                                            ? asset('storage/' . $item->photos->first()->file_path)
-                                                            : (optional($item->photos->first())->file_data
-                                                                ? $item->photos->first()->file_data
+                                        'photo'        => optional($item->photos->first())->file_data
+                                                            ? $item->photos->first()->file_data
+                                                            : (optional($item->photos->first())->file_path
+                                                                ? asset('storage/' . $item->photos->first()->file_path)
                                                                 : null),
                                     ]) }})">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -525,7 +525,7 @@
         @php
             $firstPhoto = $item->photos->first();
             $photo = $firstPhoto
-                ? ($firstPhoto->file_path ? asset('storage/'.$firstPhoto->file_path) : $firstPhoto->file_data)
+                ? ($firstPhoto->file_data ?: ($firstPhoto->file_path ? asset('storage/'.$firstPhoto->file_path) : null))
                 : null;
         @endphp
         <div class="item-card">

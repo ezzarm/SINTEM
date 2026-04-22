@@ -1,12 +1,13 @@
 <?php
-// app/Http/Controllers/Admin/PengumumanController.php
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\PhotoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PengumumanController extends Controller
 {
@@ -49,12 +50,7 @@ class PengumumanController extends Controller
             $item->photos = DB::table('photos')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $item->id)
-                ->get()
-                ->map(function ($p) {
-                    // FIX: Tambahkan photo_url dari file_path
-                    $p->photo_url = $p->file_path ? Storage::url($p->file_path) : null;
-                    return $p;
-                });
+                ->get();
             $item->attachments = DB::table('attachments')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $item->id)
@@ -73,7 +69,7 @@ class PengumumanController extends Controller
                 'title'        => 'required|string|max:255',
                 'content'      => 'required|string',
                 'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+                'photo'        => 'nullable|image|max:10240',
             ]);
 
             $announcementId = DB::table('announcements')->insertGetId([
@@ -86,26 +82,21 @@ class PengumumanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/announcements', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'announcement',
-                    'source_id'   => $announcementId,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => auth()->user()->id,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::store(
+                    $request->file('photo'),
+                    'announcement',
+                    $announcementId,
+                    auth()->user()->id
+                );
             }
 
             if ($request->hasFile('attachment_file')) {
                 $file = $request->file('attachment_file');
-                $path = $file->store('uploads/attachments/announcements', 'public');
+                $path = $file->storeAs(
+                    'uploads/attachments/announcements',
+                    Str::random(40) . '.' . $file->getClientOriginalExtension(),
+                    'public'
+                );
                 DB::table('attachments')->insert([
                     'source_type'     => 'announcement',
                     'source_id'       => $announcementId,
@@ -137,7 +128,7 @@ class PengumumanController extends Controller
                 'title'        => 'required|string|max:255',
                 'content'      => 'required|string',
                 'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+                'photo'        => 'nullable|image|max:10240',
             ]);
 
             DB::table('announcements')->where('id', $id)->update([
@@ -148,32 +139,13 @@ class PengumumanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $oldPhoto = DB::table('photos')
-                    ->where('source_type', 'announcement')
-                    ->where('source_id', $id)
-                    ->first();
-
-                if ($oldPhoto) {
-                    // FIX: Hapus file lama dari storage
-                    if ($oldPhoto->file_path) Storage::disk('public')->delete($oldPhoto->file_path);
-                    DB::table('photos')->where('id', $oldPhoto->id)->delete();
-                }
-
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/announcements', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'announcement',
-                    'source_id'   => $id,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => auth()->user()->id,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::delete('announcement', $id);
+                PhotoHelper::store(
+                    $request->file('photo'),
+                    'announcement',
+                    $id,
+                    auth()->user()->id
+                );
             }
 
             return back()->with('success', 'Pengumuman berhasil diperbarui.');
@@ -188,17 +160,21 @@ class PengumumanController extends Controller
     public function destroy($id)
     {
         try {
-            $photos = DB::table('photos')->where('source_type', 'announcement')->where('source_id', $id)->get();
-            foreach ($photos as $p) {
-                if ($p->file_path) Storage::disk('public')->delete($p->file_path);
-            }
-            DB::table('photos')->where('source_type', 'announcement')->where('source_id', $id)->delete();
+            PhotoHelper::delete('announcement', $id);
 
-            $attachments = DB::table('attachments')->where('source_type', 'announcement')->where('source_id', $id)->get();
+            $attachments = DB::table('attachments')
+                ->where('source_type', 'announcement')
+                ->where('source_id', $id)
+                ->get();
             foreach ($attachments as $a) {
-                if ($a->file_path) Storage::disk('public')->delete($a->file_path);
+                if ($a->file_path) {
+                    Storage::disk('public')->delete($a->file_path);
+                }
             }
-            DB::table('attachments')->where('source_type', 'announcement')->where('source_id', $id)->delete();
+            DB::table('attachments')
+                ->where('source_type', 'announcement')
+                ->where('source_id', $id)
+                ->delete();
 
             DB::table('announcements')->where('id', $id)->delete();
 

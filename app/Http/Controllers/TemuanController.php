@@ -6,10 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Helpers\PhotoHelper;
 
 class TemuanController extends Controller
 {
-    // ── TAMPILKAN SEMUA TEMUAN (HALAMAN PUBLIK) ──
     public function index(Request $request)
     {
         $sort   = $request->get('sort', 'terbaru');
@@ -66,13 +66,11 @@ class TemuanController extends Controller
         ));
     }
 
-    // ── FORM BUAT LAPORAN ──
     public function create()
     {
         return view('temuan.buat');
     }
 
-    // ── SIMPAN LAPORAN TEMUAN ──
     public function store(Request $request)
     {
         $request->validate([
@@ -98,20 +96,7 @@ class TemuanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $file   = $request->file('photo');
-                $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
-                DB::table('photos')->insert([
-                    'source_type' => 'lost_found',
-                    'source_id'   => $lostFoundId,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => '',
-                    'file_data'   => $base64,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => Auth::id(),
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::store($request->file('photo'), 'lost_found', $lostFoundId, Auth::id());
             }
 
             DB::commit();

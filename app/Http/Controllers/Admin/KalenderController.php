@@ -4,6 +4,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\PhotoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -54,15 +55,15 @@ class KalenderController extends Controller
         $total = $query->count();
         $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
+        // Ambil foto dengan URL yang benar (bukan raw base64 lagi)
         foreach ($items as $item) {
             $photo = DB::table('photos')
                 ->where('source_type', 'event')
                 ->where('source_id', $item->id)
                 ->first();
-            // FIX: Gunakan file_path + Storage::url, bukan base64
-            $item->photo_url = $photo && $photo->file_path
-                ? Storage::url($photo->file_path)
-                : null;
+            $item->photo_url  = PhotoHelper::url($photo);
+            // Backward compat: view lama yang masih pakai photo_data
+            $item->photo_data = $item->photo_url;
         }
 
         $categories = DB::table('event_categories')->orderBy('name')->get();
@@ -86,7 +87,7 @@ class KalenderController extends Controller
                 'event_date_end' => 'nullable|date|after_or_equal:event_date',
                 'description'    => 'nullable|string',
                 'is_published'   => 'required|in:0,1',
-                'photo'          => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+                'photo'          => 'nullable|image|max:10240',
             ]);
 
             $eventId = DB::table('events')->insertGetId([
@@ -103,21 +104,7 @@ class KalenderController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/events', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'event',
-                    'source_id'   => $eventId,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => auth()->user()->id,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::store($request->file('photo'), 'event', $eventId, auth()->user()->id);
             }
 
             return back()->with('success', 'Kegiatan berhasil disimpan.');
@@ -140,7 +127,7 @@ class KalenderController extends Controller
                 'event_date_end' => 'nullable|date|after_or_equal:event_date',
                 'description'    => 'nullable|string',
                 'is_published'   => 'required|in:0,1',
-                'photo'          => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+                'photo'          => 'nullable|image|max:10240',
             ]);
 
             DB::table('events')->where('id', $id)->update([
@@ -155,27 +142,8 @@ class KalenderController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $old = DB::table('photos')->where('source_type', 'event')->where('source_id', $id)->first();
-                if ($old) {
-                    // FIX: Hapus file lama dari storage
-                    if ($old->file_path) Storage::disk('public')->delete($old->file_path);
-                    DB::table('photos')->where('id', $old->id)->delete();
-                }
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/events', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'event',
-                    'source_id'   => $id,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => auth()->user()->id,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::delete('event', $id);
+                PhotoHelper::store($request->file('photo'), 'event', $id, auth()->user()->id);
             }
 
             return back()->with('success', 'Kegiatan berhasil diperbarui.');
@@ -190,12 +158,7 @@ class KalenderController extends Controller
     public function destroy($id)
     {
         try {
-            // FIX: Hapus file dari storage sebelum hapus record
-            $photos = DB::table('photos')->where('source_type', 'event')->where('source_id', $id)->get();
-            foreach ($photos as $p) {
-                if ($p->file_path) Storage::disk('public')->delete($p->file_path);
-            }
-            DB::table('photos')->where('source_type', 'event')->where('source_id', $id)->delete();
+            PhotoHelper::delete('event', $id);
             DB::table('attachments')->where('source_type', 'event')->where('source_id', $id)->delete();
             DB::table('events')->where('id', $id)->delete();
 

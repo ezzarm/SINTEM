@@ -317,11 +317,11 @@
                     </td>
                     <td style="white-space:nowrap;color:#9ca3af;font-size:12px;">{{ \Carbon\Carbon::parse($item->created_at)->format('d M Y') }}</td>
                     <td>
-                        <button class="action-btn" title="Lihat detail" onclick="openDetail({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_path ? asset('storage/'.$photoMap[$item->id]->file_path) : $photoMap[$item->id]->file_data) : null) }})">
+                        <button class="action-btn" title="Lihat detail" onclick="openDetail({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_data ?: asset('storage/'.$photoMap[$item->id]->file_path)) : null) }})">
                             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3" stroke-width="1.8"/></svg>
                         </button>
                         @if($item->status === 'pending')
-                        <button class="action-btn edit" title="Edit" onclick="openEdit({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_path ? asset('storage/'.$photoMap[$item->id]->file_path) : $photoMap[$item->id]->file_data) : null) }})">
+                        <button class="action-btn edit" title="Edit" onclick="openEdit({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_data ?: asset('storage/'.$photoMap[$item->id]->file_path)) : null) }})">
                             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
                         <button class="action-btn danger" title="Hapus" onclick="openDelete({{ $item->id }}, '{{ addslashes($item->item_name) }}')">
@@ -358,11 +358,11 @@
             </div>
             @if($item->description)<div class="m-card-desc">{{ $item->description }}</div>@endif
             <div class="m-card-actions">
-                <button class="m-action-btn" onclick="openDetail({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_path ? asset('storage/'.$photoMap[$item->id]->file_path) : $photoMap[$item->id]->file_data) : null) }})">
+                <button class="m-action-btn" onclick="openDetail({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_data ?: asset('storage/'.$photoMap[$item->id]->file_path)) : null) }})">
                     <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3" stroke-width="1.8"/></svg>Detail
                 </button>
                 @if($item->status === 'pending')
-                <button class="m-action-btn" onclick="openEdit({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_path ? asset('storage/'.$photoMap[$item->id]->file_path) : $photoMap[$item->id]->file_data) : null) }})">
+                <button class="m-action-btn" onclick="openEdit({{ json_encode($item) }}, {{ json_encode(isset($photoMap[$item->id]) ? ($photoMap[$item->id]->file_data ?: asset('storage/'.$photoMap[$item->id]->file_path)) : null) }})">
                     <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 4H6a2 2 0 00-2 2v13a2 2 0 002 2h11a2 2 0 002-2v-5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
                 </button>
                 <button class="m-action-btn danger" onclick="openDelete({{ $item->id }}, '{{ addslashes($item->item_name) }}')">

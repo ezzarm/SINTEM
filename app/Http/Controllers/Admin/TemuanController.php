@@ -4,12 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
+use App\Http\Helpers\PhotoHelper;
 
 class TemuanController extends Controller
 {
-    // ── GET /admin/temuan ──
     public function index(Request $request)
     {
         $sort    = $request->get('sort', 'terbaru');
@@ -26,11 +25,9 @@ class TemuanController extends Controller
         if ($status && $status !== 'all') {
             $query->where('lost_founds.status', $status);
         }
-
         if ($type && $type !== 'all') {
             $query->where('lost_founds.type', $type);
         }
-
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('lost_founds.item_name', 'like', "%{$search}%")
@@ -47,16 +44,12 @@ class TemuanController extends Controller
         $ids = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
-            $photos = DB::table('photos')
+            $photoMap = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
-                ->get();
-
-            foreach ($photos as $photo) {
-                // FIX: Simpan photo_url dari file_path, bukan file_data
-                $photo->photo_url = $photo->file_path ? Storage::url($photo->file_path) : null;
-                $photoMap[$photo->source_id] = $photo;
-            }
+                ->get()
+                ->keyBy('source_id')
+                ->toArray();
         }
 
         return view('admin.temuan.index', compact(
@@ -65,7 +58,6 @@ class TemuanController extends Controller
         ));
     }
 
-    // ── POST /admin/temuan ──
     public function store(Request $request)
     {
         try {
@@ -92,21 +84,7 @@ class TemuanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/lost-found', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'lost_found',
-                    'source_id'   => $id,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => $adminId,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::store($request->file('photo'), 'lost_found', $id, $adminId);
             }
 
             return redirect()->route('admin.temuan.index')
@@ -119,7 +97,6 @@ class TemuanController extends Controller
         }
     }
 
-    // ── PUT /admin/temuan/{id} ──
     public function update(Request $request, $id)
     {
         try {
@@ -148,32 +125,8 @@ class TemuanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $old = DB::table('photos')
-                    ->where('source_type', 'lost_found')
-                    ->where('source_id', $id)
-                    ->first();
-
-                if ($old) {
-                    // FIX: Hapus file lama dari storage
-                    if ($old->file_path) Storage::disk('public')->delete($old->file_path);
-                    DB::table('photos')->where('id', $old->id)->delete();
-                }
-
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/lost-found', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'lost_found',
-                    'source_id'   => $id,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => auth()->user()->id,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::delete('lost_found', $id);
+                PhotoHelper::store($request->file('photo'), 'lost_found', $id, auth()->user()->id);
             }
 
             return redirect()->route('admin.temuan.index')
@@ -186,7 +139,6 @@ class TemuanController extends Controller
         }
     }
 
-    // ── DELETE /admin/temuan/{id} ──
     public function destroy($id)
     {
         try {
@@ -196,12 +148,7 @@ class TemuanController extends Controller
                     ->with('error', 'Temuan tidak ditemukan.');
             }
 
-            // FIX: Hapus file dari storage sebelum hapus record
-            $photos = DB::table('photos')->where('source_type', 'lost_found')->where('source_id', $id)->get();
-            foreach ($photos as $p) {
-                if ($p->file_path) Storage::disk('public')->delete($p->file_path);
-            }
-            DB::table('photos')->where('source_type', 'lost_found')->where('source_id', $id)->delete();
+            PhotoHelper::delete('lost_found', $id);
             DB::table('lost_founds')->where('id', $id)->delete();
 
             return redirect()->route('admin.temuan.index')
@@ -212,7 +159,6 @@ class TemuanController extends Controller
         }
     }
 
-    // ── PATCH /admin/temuan/{id}/approve ──
     public function approve($id)
     {
         try {
@@ -235,7 +181,6 @@ class TemuanController extends Controller
         }
     }
 
-    // ── PATCH /admin/temuan/{id}/reject ──
     public function reject(Request $request, $id)
     {
         try {

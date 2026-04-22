@@ -5,24 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Http\Helpers\PhotoHelper;
 
 class LaporanController extends Controller
 {
-    /**
-     * ==========================================
-     * BAGIAN 1: LAPORAN ANONIM (TKT-XXX)
-     * ==========================================
-     */
+    // ==========================================
+    // BAGIAN 1: LAPORAN ANONIM (TKT-XXX)
+    // ==========================================
 
-    // GET /laporan/buat
     public function create()
     {
         $categories = DB::table('report_categories')->orderBy('id')->get();
         return view('laporan.buat', compact('categories'));
     }
 
-    // POST /laporan/buat (Proses Simpan Anonim)
     public function store(Request $request)
     {
         try {
@@ -32,7 +28,6 @@ class LaporanController extends Controller
                 'photo'          => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
             ]);
 
-            // Generate Ticket Number
             $lastId = DB::table('anonymous_reports')->max('id') ?? 0;
             $ticket = 'TKT-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
 
@@ -46,24 +41,9 @@ class LaporanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/anonymous-reports', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'anonymous_report',
-                    'source_id'   => $reportId,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => null,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::store($request->file('photo'), 'anonymous_report', $reportId, null);
             }
 
-            // Simpan tiket ke session
             $tickets   = session('my_tickets', []);
             $tickets[] = $ticket;
             session(['my_tickets' => $tickets]);
@@ -78,7 +58,6 @@ class LaporanController extends Controller
         }
     }
 
-    // GET /laporan/anonim (Daftar Laporan Anonim User)
     public function anonim(Request $request)
     {
         $myTickets = session('my_tickets', []);
@@ -105,7 +84,6 @@ class LaporanController extends Controller
         return view('laporan.anonim', compact('items', 'sort', 'search'));
     }
 
-    // DELETE /laporan/anonim/{id}
     public function destroyAnonim($id)
     {
         $myTickets = session('my_tickets', []);
@@ -120,12 +98,7 @@ class LaporanController extends Controller
             return redirect()->route('laporan.anonim')->with('error', 'Laporan tidak ditemukan.');
         }
 
-        // FIX: Hapus file dari storage sebelum hapus record
-        $photos = DB::table('photos')->where('source_type', 'anonymous_report')->where('source_id', $id)->get();
-        foreach ($photos as $p) {
-            if ($p->file_path) Storage::disk('public')->delete($p->file_path);
-        }
-        DB::table('photos')->where('source_type', 'anonymous_report')->where('source_id', $id)->delete();
+        PhotoHelper::delete('anonymous_report', $id);
         DB::table('anonymous_reports')->where('id', $id)->delete();
 
         $updated = array_values(array_filter($myTickets, fn($t) => $t !== $report->ticket_number));
@@ -134,13 +107,10 @@ class LaporanController extends Controller
         return redirect()->route('laporan.anonim')->with('success', 'Laporan berhasil dihapus.');
     }
 
-    /**
-     * ==========================================
-     * BAGIAN 2: LAPORAN TEMUAN (LOST & FOUND)
-     * ==========================================
-     */
+    // ==========================================
+    // BAGIAN 2: LAPORAN TEMUAN (LOST & FOUND)
+    // ==========================================
 
-    // GET /laporan/temuan (List data milik user)
     public function temuan(Request $request)
     {
         $sort   = $request->get('sort', 'terbaru');
@@ -159,22 +129,17 @@ class LaporanController extends Controller
         $ids = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
-            $photos = DB::table('photos')
+            $photoMap = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
-                ->get();
-
-            foreach ($photos as $photo) {
-                // FIX: Simpan photo_url dari file_path
-                $photo->photo_url = $photo->file_path ? Storage::url($photo->file_path) : null;
-                $photoMap[$photo->source_id] = $photo;
-            }
+                ->get()
+                ->keyBy('source_id')
+                ->toArray();
         }
 
         return view('laporan.temuan', compact('items', 'sort', 'search', 'photoMap'));
     }
 
-    // POST /laporan/temuan (Proses Simpan Temuan/Kehilangan)
     public function storeTemuan(Request $request)
     {
         try {
@@ -198,24 +163,11 @@ class LaporanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/lost-found', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'lost_found',
-                    'source_id'   => $reportId,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => Auth::id(),
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::store($request->file('photo'), 'lost_found', $reportId, Auth::id());
             }
 
-            return redirect()->route('laporan.temuan')->with('success', 'Laporan Temuan/Kehilangan berhasil diposting.');
+            return redirect()->route('laporan.temuan')
+                ->with('success', 'Laporan Temuan/Kehilangan berhasil diposting.');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
@@ -224,7 +176,6 @@ class LaporanController extends Controller
         }
     }
 
-    // PUT /temuan/{id}
     public function updateTemuan(Request $request, $id)
     {
         try {
@@ -243,7 +194,8 @@ class LaporanController extends Controller
                 ->first();
 
             if (!$report) {
-                return redirect()->route('laporan.temuan')->with('error', 'Laporan tidak ditemukan.');
+                return redirect()->route('laporan.temuan')
+                    ->with('error', 'Laporan tidak ditemukan.');
             }
 
             DB::table('lost_founds')->where('id', $id)->update([
@@ -255,35 +207,12 @@ class LaporanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                $old = DB::table('photos')
-                    ->where('source_type', 'lost_found')
-                    ->where('source_id', $id)
-                    ->first();
-
-                if ($old) {
-                    // FIX: Hapus file lama dari storage
-                    if ($old->file_path) Storage::disk('public')->delete($old->file_path);
-                    DB::table('photos')->where('id', $old->id)->delete();
-                }
-
-                $file = $request->file('photo');
-                // FIX: Simpan ke storage/public, bukan base64 ke DB
-                $path = $file->store('uploads/photos/lost-found', 'public');
-                DB::table('photos')->insert([
-                    'source_type' => 'lost_found',
-                    'source_id'   => $id,
-                    'file_name'   => $file->getClientOriginalName(),
-                    'file_path'   => $path,
-                    'file_data'   => null,
-                    'file_type'   => $file->getMimeType(),
-                    'file_size'   => $file->getSize(),
-                    'uploaded_by' => Auth::id(),
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
+                PhotoHelper::delete('lost_found', $id);
+                PhotoHelper::store($request->file('photo'), 'lost_found', $id, Auth::id());
             }
 
-            return redirect()->route('laporan.temuan')->with('success', 'Laporan berhasil diperbarui.');
+            return redirect()->route('laporan.temuan')
+                ->with('success', 'Laporan berhasil diperbarui.');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
@@ -292,7 +221,6 @@ class LaporanController extends Controller
         }
     }
 
-    // DELETE /temuan/{id}
     public function destroyTemuan($id)
     {
         $report = DB::table('lost_founds')
@@ -302,17 +230,14 @@ class LaporanController extends Controller
             ->first();
 
         if (!$report) {
-            return redirect()->route('laporan.temuan')->with('error', 'Laporan tidak bisa dihapus.');
+            return redirect()->route('laporan.temuan')
+                ->with('error', 'Laporan tidak bisa dihapus.');
         }
 
-        // FIX: Hapus file dari storage sebelum hapus record
-        $photos = DB::table('photos')->where('source_type', 'lost_found')->where('source_id', $id)->get();
-        foreach ($photos as $p) {
-            if ($p->file_path) Storage::disk('public')->delete($p->file_path);
-        }
-        DB::table('photos')->where('source_type', 'lost_found')->where('source_id', $id)->delete();
+        PhotoHelper::delete('lost_found', $id);
         DB::table('lost_founds')->where('id', $id)->delete();
 
-        return redirect()->route('laporan.temuan')->with('success', 'Laporan berhasil dihapus.');
+        return redirect()->route('laporan.temuan')
+            ->with('success', 'Laporan berhasil dihapus.');
     }
 }
