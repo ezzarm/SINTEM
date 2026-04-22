@@ -154,3 +154,53 @@ Route::post('/debug-login', function (\Illuminate\Http\Request $request) {
         'session_all'    => session()->all(),
     ]);
 });
+
+// ── TEMPORARY DIAGNOSTIC ROUTE - REMOVE AFTER DEBUGGING ────
+Route::post('/debug-upload-test', function (\Illuminate\Http\Request $request) {
+    $results = [];
+
+    // Test 1: Basic PHP info
+    $results['php_version'] = PHP_VERSION;
+    $results['upload_max_filesize'] = ini_get('upload_max_filesize');
+    $results['post_max_size'] = ini_get('post_max_size');
+    $results['memory_limit'] = ini_get('memory_limit');
+
+    // Test 2: Storage writability
+    $storagePath = storage_path('app/public/upload/photos/lost_found');
+    $results['storage_path'] = $storagePath;
+    $results['storage_exists'] = is_dir($storagePath);
+    $results['storage_writable'] = is_writable($storagePath);
+    $results['public_storage_symlink'] = is_link(public_path('storage'));
+    $results['public_storage_target'] = is_link(public_path('storage'))
+        ? readlink(public_path('storage')) : 'NOT A SYMLINK';
+
+    // Test 3: If file uploaded, try to store it
+    if ($request->hasFile('photo')) {
+        $file = $request->file('photo');
+        $results['file_size'] = $file->getSize();
+        $results['file_mime'] = $file->getMimeType();
+        $results['file_valid'] = $file->isValid();
+        $results['file_error'] = $file->getError();
+
+        try {
+            $path = $file->storeAs('upload/photos/test', 'test_'.time().'.'.$file->extension(), 'public');
+            $results['store_result'] = $path ?: 'FALSE (returned false)';
+            $results['store_success'] = (bool) $path;
+        } catch (\Throwable $e) {
+            $results['store_exception'] = $e->getMessage();
+            $results['store_file'] = $e->getFile().':'.$e->getLine();
+        }
+    } else {
+        $results['file_present'] = false;
+    }
+
+    // Test 4: DB write
+    try {
+        \Illuminate\Support\Facades\DB::statement('SELECT 1');
+        $results['db_ok'] = true;
+    } catch (\Throwable $e) {
+        $results['db_error'] = $e->getMessage();
+    }
+
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+});
