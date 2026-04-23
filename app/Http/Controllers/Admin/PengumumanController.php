@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Helpers\PhotoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class PengumumanController extends Controller
 {
@@ -32,7 +30,7 @@ class PengumumanController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('announcements.title',   'like', "%$search%")
+                $q->where('announcements.title',    'like', "%$search%")
                   ->orWhere('announcements.content', 'like', "%$search%");
             });
         }
@@ -70,43 +68,44 @@ class PengumumanController extends Controller
                 'content'      => 'required|string',
                 'is_published' => 'required|in:0,1',
                 'photo'        => 'nullable|image|max:10240',
+                'attachment_file' => 'nullable|file|max:10240',
             ]);
 
             $announcementId = DB::table('announcements')->insertGetId([
                 'title'        => $request->title,
                 'content'      => $request->content,
                 'is_published' => $request->is_published,
-                'created_by'   => auth()->user()->id,
+                'created_by'   => auth()->id(),
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ]);
 
+            // Foto → langsung ke DB via PhotoHelper
             if ($request->hasFile('photo')) {
                 PhotoHelper::store(
                     $request->file('photo'),
                     'announcement',
                     $announcementId,
-                    auth()->user()->id
+                    auth()->id()
                 );
             }
 
+            // Attachment file → base64 langsung ke DB, tidak ke storage
             if ($request->hasFile('attachment_file')) {
-                $file = $request->file('attachment_file');
-                $path = $file->storeAs(
-                    'uploads/attachments/announcements',
-                    Str::random(40) . '.' . $file->getClientOriginalExtension(),
-                    'public'
-                );
+                $file     = $request->file('attachment_file');
+                $fileData = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+
                 DB::table('attachments')->insert([
                     'source_type'     => 'announcement',
                     'source_id'       => $announcementId,
                     'attachment_type' => 'file',
                     'file_name'       => $file->getClientOriginalName(),
-                    'file_path'       => $path,
+                    'file_path'       => '',
+                    'file_data'       => $fileData,
                     'file_type'       => $file->getMimeType(),
                     'file_size'       => $file->getSize(),
                     'label'           => $request->attachment_label ?? null,
-                    'uploaded_by'     => auth()->user()->id,
+                    'uploaded_by'     => auth()->id(),
                     'created_at'      => now(),
                     'updated_at'      => now(),
                 ]);
@@ -125,10 +124,11 @@ class PengumumanController extends Controller
     {
         try {
             $request->validate([
-                'title'        => 'required|string|max:255',
-                'content'      => 'required|string',
-                'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|max:10240',
+                'title'           => 'required|string|max:255',
+                'content'         => 'required|string',
+                'is_published'    => 'required|in:0,1',
+                'photo'           => 'nullable|image|max:10240',
+                'attachment_file' => 'nullable|file|max:10240',
             ]);
 
             DB::table('announcements')->where('id', $id)->update([
@@ -144,8 +144,34 @@ class PengumumanController extends Controller
                     $request->file('photo'),
                     'announcement',
                     $id,
-                    auth()->user()->id
+                    auth()->id()
                 );
+            }
+
+            if ($request->hasFile('attachment_file')) {
+                $file     = $request->file('attachment_file');
+                $fileData = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+
+                // Hapus attachment lama dulu
+                DB::table('attachments')
+                    ->where('source_type', 'announcement')
+                    ->where('source_id', $id)
+                    ->delete();
+
+                DB::table('attachments')->insert([
+                    'source_type'     => 'announcement',
+                    'source_id'       => $id,
+                    'attachment_type' => 'file',
+                    'file_name'       => $file->getClientOriginalName(),
+                    'file_path'       => '',
+                    'file_data'       => $fileData,
+                    'file_type'       => $file->getMimeType(),
+                    'file_size'       => $file->getSize(),
+                    'label'           => $request->attachment_label ?? null,
+                    'uploaded_by'     => auth()->id(),
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
             }
 
             return back()->with('success', 'Pengumuman berhasil diperbarui.');
@@ -162,15 +188,7 @@ class PengumumanController extends Controller
         try {
             PhotoHelper::delete('announcement', $id);
 
-            $attachments = DB::table('attachments')
-                ->where('source_type', 'announcement')
-                ->where('source_id', $id)
-                ->get();
-            foreach ($attachments as $a) {
-                if ($a->file_path) {
-                    Storage::disk('public')->delete($a->file_path);
-                }
-            }
+            // Hapus attachment langsung dari DB (tidak ada file di disk)
             DB::table('attachments')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $id)
