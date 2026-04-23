@@ -16,6 +16,14 @@ return new class extends Migration
             });
         }
 
+        // Tambah file_data ke attachments — hanya jika belum ada
+        if (!Schema::hasColumn('attachments', 'file_data')) {
+            Schema::table('attachments', function (Blueprint $table) {
+                $table->longText('file_data')->nullable()->after('file_path')
+                    ->comment('Base64 encoded file data (data:mime;base64,...)');
+            });
+        }
+
         // Tambah reject_reason ke lost_founds — hanya jika belum ada
         if (!Schema::hasColumn('lost_founds', 'reject_reason')) {
             Schema::table('lost_founds', function (Blueprint $table) {
@@ -27,6 +35,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (Schema::hasColumn('attachments', 'file_data')) {
+            Schema::table('attachments', function (Blueprint $table) {
+                $table->dropColumn('file_data');
+            });
+        }
+
         if (Schema::hasColumn('photos', 'file_data')) {
             Schema::table('photos', function (Blueprint $table) {
                 $table->dropColumn('file_data');
