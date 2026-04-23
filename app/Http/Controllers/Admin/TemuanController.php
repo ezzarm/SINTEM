@@ -44,12 +44,12 @@ class TemuanController extends Controller
         $ids = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
+    
             $photoMap = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
                 ->get()
-                ->keyBy('source_id')
-                ->toArray();
+                ->keyBy('source_id');  // ← Hasil: Collection, tiap item adalah object stdClass
         }
 
         return view('admin.temuan.index', compact(
