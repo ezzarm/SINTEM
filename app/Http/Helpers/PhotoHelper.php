@@ -7,32 +7,25 @@ use Illuminate\Support\Facades\DB;
 
 class PhotoHelper
 {
+    /**
+     * Resize foto, encode base64, simpan langsung ke kolom file_data di tabel photos.
+     * TIDAK menyentuh storage/disk sama sekali.
+     */
     public static function store(
         UploadedFile $file,
         string $sourceType,
         int $sourceId,
         ?int $uploadedBy = null
     ): void {
-        $mime = $file->getMimeType() ?? 'image/jpeg';
+        $mime = $file->getMimeType();
         $path = $file->getRealPath();
 
-        $rawBytes = file_get_contents($path);
-        $src = @imagecreatefromstring($rawBytes);
-
-        if ($src === false) {
-            DB::table('photos')->insert([
-                'source_type' => $sourceType,
-                'source_id'   => $sourceId,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => 'data:' . $mime . ';base64,' . base64_encode($rawBytes),
-                'file_type'   => $mime,
-                'file_size'   => strlen($rawBytes),
-                'uploaded_by' => $uploadedBy,
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
-            return;
+        if (str_contains($mime, 'png')) {
+            $src = imagecreatefrompng($path);
+        } elseif (str_contains($mime, 'gif')) {
+            $src = imagecreatefromgif($path);
+        } else {
+            $src = imagecreatefromjpeg($path);
         }
 
         $origW = imagesx($src);
@@ -61,7 +54,7 @@ class PhotoHelper
             'source_type' => $sourceType,
             'source_id'   => $sourceId,
             'file_name'   => $file->getClientOriginalName(),
-            'file_path'   => '',
+            'file_path'   => '',                                          // selalu kosong, tidak pakai storage
             'file_data'   => 'data:image/jpeg;base64,' . base64_encode($jpeg),
             'file_type'   => 'image/jpeg',
             'file_size'   => strlen($jpeg),
@@ -79,6 +72,10 @@ class PhotoHelper
             ->delete();
     }
 
+    /**
+     * Ambil URL/data-URI foto dari record DB.
+     * Selalu dari file_data (base64), tidak pernah ke Storage.
+     */
     public static function url(?object $photo): ?string
     {
         if (!$photo) return null;
