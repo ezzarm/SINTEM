@@ -1,0 +1,206 @@
+<?php
+// routes/web.php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PengumumanController;
+use App\Http\Controllers\KalenderController;
+use App\Http\Controllers\TemuanController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\PengumumanController as AdminPengumumanController;
+use App\Http\Controllers\Admin\KalenderController   as AdminKalenderController;
+use App\Http\Controllers\Admin\TemuanController     as AdminTemuanController;
+use App\Http\Controllers\Admin\LaporanAnonimController as AdminLaporanAnonimController;
+
+// ── PUBLIC ─────────────────────────────────────────────────────────────────
+Route::get('/', function () { return view('welcome'); });
+
+Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
+
+Route::get('/forgot-password', function () {
+    return view('auth.forgot-password');
+})->name('password.request');
+
+Route::get('/debug-session', function () {
+    return response()->json([
+        'auth'           => auth()->check(),
+        'user'           => auth()->user(),
+        'session_id'     => session()->getId(),
+        'session_all'    => session()->all(),
+        'session_driver' => config('session.driver'),
+        'session_secure' => config('session.secure'),
+        'session_domain' => config('session.domain'),
+        'app_url'        => config('app.url'),
+    ]);
+});
+
+// ── USER PANEL ─────────────────────────────────────────────────────────────
+Route::middleware(['auth'])->group(function () {
+
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/dashboard', fn () => redirect()->route('pengumuman.index'))->name('dashboard');
+
+    Route::get('/pengumuman', [PengumumanController::class, 'index'])->name('pengumuman.index');
+    Route::get('/kalender',   [KalenderController::class,   'index'])->name('kalender.index');
+
+    Route::get('/temuan',       [TemuanController::class, 'index']) ->name('temuan.index');
+    Route::get('/temuan/buat',  [TemuanController::class, 'create'])->name('temuan.buat');
+    Route::post('/temuan/buat', [TemuanController::class, 'store']) ->name('temuan.store');
+
+    Route::get('/laporan/buat',  [LaporanController::class, 'create'])->name('laporan.buat');
+    Route::post('/laporan/buat', [LaporanController::class, 'store']) ->name('laporan.store');
+
+    Route::get('/laporan/temuan',     [LaporanController::class, 'temuan'])       ->name('laporan.temuan');
+    Route::put('/temuan/{id}',        [LaporanController::class, 'updateTemuan']) ->name('laporan.temuan.update');
+    Route::delete('/temuan/{id}',     [LaporanController::class, 'destroyTemuan'])->name('laporan.temuan.destroy');
+
+    Route::get('/laporan/anonim',         [LaporanController::class, 'anonim'])       ->name('laporan.anonim');
+    Route::delete('/laporan/anonim/{id}', [LaporanController::class, 'destroyAnonim'])->name('laporan.anonim.destroy');
+
+    Route::get('/profile',          [ProfileController::class, 'show'])          ->name('profile.show');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+});
+
+// ── ADMIN PANEL ────────────────────────────────────────────────────────────
+// FIX: Added 'admin' middleware so regular users (role_id=2) cannot access this.
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/profile',          [ProfileController::class, 'show'])          ->name('profile.show');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Pengumuman
+    Route::prefix('pengumuman')->name('pengumuman.')->group(function () {
+        Route::get('/',              [AdminPengumumanController::class, 'index'])     ->name('index');
+        Route::get('/buat',          [AdminPengumumanController::class, 'create'])    ->name('buat');
+        Route::post('/',             [AdminPengumumanController::class, 'store'])     ->name('store');
+        Route::put('/{id}',          [AdminPengumumanController::class, 'update'])    ->name('update');
+        Route::delete('/{id}',       [AdminPengumumanController::class, 'destroy'])   ->name('destroy');
+        Route::patch('/{id}/toggle', [AdminPengumumanController::class, 'toggleDraft'])->name('toggleDraft');
+    });
+
+    // Kalender Kegiatan
+    Route::prefix('kalender')->name('kalender.')->group(function () {
+        Route::get('/',              [AdminKalenderController::class, 'index'])  ->name('index');
+        Route::post('/',             [AdminKalenderController::class, 'store'])  ->name('store');
+        Route::put('/{id}',          [AdminKalenderController::class, 'update']) ->name('update');
+        Route::delete('/{id}',       [AdminKalenderController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle', [AdminKalenderController::class, 'toggle']) ->name('toggle');
+    });
+
+    // Informasi Temuan
+    Route::prefix('temuan')->name('temuan.')->group(function () {
+        Route::get('/',               [AdminTemuanController::class, 'index'])  ->name('index');
+        Route::post('/',              [AdminTemuanController::class, 'store'])  ->name('store');
+        Route::put('/{id}',           [AdminTemuanController::class, 'update']) ->name('update');
+        Route::delete('/{id}',        [AdminTemuanController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/approve', [AdminTemuanController::class, 'approve'])->name('approve');
+        Route::patch('/{id}/reject',  [AdminTemuanController::class, 'reject']) ->name('reject');
+    });
+
+    // Laporan Anonim
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/anonim',               [AdminLaporanAnonimController::class, 'index'])       ->name('anonim');
+        Route::patch('/anonim/{id}/status', [AdminLaporanAnonimController::class, 'updateStatus'])->name('anonim.status');
+        Route::delete('/anonim/{id}',       [AdminLaporanAnonimController::class, 'destroy'])     ->name('anonim.destroy');
+    });
+});
+
+// ── SUPERADMIN PANEL ───────────────────────────────────────────────────────
+Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+
+    Route::get('/profile',          [ProfileController::class, 'show'])          ->name('profile.show');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Accounts CRUD
+    Route::prefix('accounts')->name('accounts.')->group(function () {
+        Route::get('/',          [\App\Http\Controllers\Superadmin\AccountController::class, 'index']) ->name('index');
+        Route::get('/create',    [\App\Http\Controllers\Superadmin\AccountController::class, 'create'])->name('create');
+        Route::post('/',         [\App\Http\Controllers\Superadmin\AccountController::class, 'store']) ->name('store');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Superadmin\AccountController::class, 'edit'])  ->name('edit');
+        Route::put('/{id}',      [\App\Http\Controllers\Superadmin\AccountController::class, 'update'])->name('update');
+        Route::delete('/{id}',   [\App\Http\Controllers\Superadmin\AccountController::class, 'destroy'])->name('destroy');
+    });
+
+    // Roles CRUD
+    Route::prefix('roles')->name('roles.')->group(function () {
+        Route::get('/',       [\App\Http\Controllers\Superadmin\RoleController::class, 'index'])  ->name('index');
+        Route::post('/',      [\App\Http\Controllers\Superadmin\RoleController::class, 'store'])  ->name('store');
+        Route::put('/{id}',   [\App\Http\Controllers\Superadmin\RoleController::class, 'update']) ->name('update');
+        Route::delete('/{id}',[\App\Http\Controllers\Superadmin\RoleController::class, 'destroy'])->name('destroy');
+    });
+
+    // Report Categories
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/',       [\App\Http\Controllers\Superadmin\CategoryController::class, 'index'])  ->name('index');
+        Route::post('/',      [\App\Http\Controllers\Superadmin\CategoryController::class, 'store'])  ->name('store');
+        Route::put('/{id}',   [\App\Http\Controllers\Superadmin\CategoryController::class, 'update']) ->name('update');
+        Route::delete('/{id}',[\App\Http\Controllers\Superadmin\CategoryController::class, 'destroy'])->name('destroy');
+    });
+});
+
+Route::post('/debug-login', function (\Illuminate\Http\Request $request) {
+    $result = \Illuminate\Support\Facades\Auth::attempt([
+        'identifier' => $request->nis,
+        'password'   => $request->password,
+        'status'     => 'active',
+    ]);
+
+    return response()->json([
+        'attempt_result' => $result,
+        'auth_check'     => auth()->check(),
+        'user'           => auth()->user(),
+        'session_all'    => session()->all(),
+    ]);
+});
+
+// ── TEMPORARY DIAGNOSTIC ROUTE - REMOVE AFTER DEBUGGING ────
+Route::post('/debug-upload-test', function (\Illuminate\Http\Request $request) {
+    $results = [];
+
+    // Test 1: Basic PHP info
+    $results['php_version'] = PHP_VERSION;
+    $results['upload_max_filesize'] = ini_get('upload_max_filesize');
+    $results['post_max_size'] = ini_get('post_max_size');
+    $results['memory_limit'] = ini_get('memory_limit');
+
+    // Test 2: Storage writability
+    $storagePath = storage_path('app/public/upload/photos/lost_found');
+    $results['storage_path'] = $storagePath;
+    $results['storage_exists'] = is_dir($storagePath);
+    $results['storage_writable'] = is_writable($storagePath);
+    $results['public_storage_symlink'] = is_link(public_path('storage'));
+    $results['public_storage_target'] = is_link(public_path('storage'))
+        ? readlink(public_path('storage')) : 'NOT A SYMLINK';
+
+    // Test 3: If file uploaded, try to store it
+    if ($request->hasFile('photo')) {
+        $file = $request->file('photo');
+        $results['file_size'] = $file->getSize();
+        $results['file_mime'] = $file->getMimeType();
+        $results['file_valid'] = $file->isValid();
+        $results['file_error'] = $file->getError();
+
+        try {
+            $path = $file->storeAs('upload/photos/test', 'test_'.time().'.'.$file->extension(), 'public');
+            $results['store_result'] = $path ?: 'FALSE (returned false)';
+            $results['store_success'] = (bool) $path;
+        } catch (\Throwable $e) {
+            $results['store_exception'] = $e->getMessage();
+            $results['store_file'] = $e->getFile().':'.$e->getLine();
+        }
+    } else {
+        $results['file_present'] = false;
+    }
+
+    // Test 4: DB write
+    try {
+        \Illuminate\Support\Facades\DB::statement('SELECT 1');
+        $results['db_ok'] = true;
+    } catch (\Throwable $e) {
+        $results['db_error'] = $e->getMessage();
+    }
+
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+});
