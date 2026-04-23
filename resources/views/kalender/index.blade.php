@@ -366,14 +366,14 @@
                     'category_color' => $event->category_color,
                     'location_name'  => $event->location_name,
                     'author'         => $event->author,
-                    'photo'          => $photo ? ($photo->file_path ? asset('storage/' . $photo->file_path) : $photo->file_data) : null,
+                    'photo'          => $photo ? $photo->file_data : null,
                     'date_str'       => $dateStr,
                 ];
             @endphp
             <div class="kl-card" onclick='openModal(@json($ed))'>
                 <div class="kl-card-img">
                     @if($photo)
-                    <img src="{{ $photo->file_path ? asset('storage/' . $photo->file_path) : $photo->file_data }}" alt="{{ $event->event_name }}"
+                    <img src="{{ $photo->file_data }}" alt="{{ $event->event_name }}"
                          onerror="this.parentElement.innerHTML='<div class=kl-card-img-placeholder>📅</div>'">
                     @else
                     <div class="kl-card-img-placeholder">📅</div>
@@ -474,7 +474,7 @@
                         'category_color' =>$ev->category_color,
                         'location_name'  =>$ev->location_name??null,
                         'author'         =>$ev->author,
-                        'photo'          =>$fp ? ($fp->file_path ? asset('storage/' . $fp->file_path) : $fp->file_data) : null,
+                        'photo'          =>$fp ? $fp->file_data : null,
                         'date_str'       =>$evDate,
                     ];
                 @endphp
