@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use App\Http\Helpers\PhotoHelper;
 
 class TemuanController extends Controller
 {
@@ -69,7 +67,7 @@ class TemuanController extends Controller
                 'item_name'   => 'required|string|max:100',
                 'description' => 'nullable|string',
                 'found_at'    => 'nullable|string|max:150',
-                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // max 2MB
             ]);
 
             DB::beginTransaction();
@@ -86,9 +84,54 @@ class TemuanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                Log::info('[Temuan.store] uploading photo for lost_found id='.$lostFoundId);
-                PhotoHelper::store($request->file('photo'), 'lost_found', $lostFoundId, Auth::id());
-                Log::info('[Temuan.store] photo stored OK');
+                $file = $request->file('photo');
+                $path = $file->getRealPath();
+                $mime = $file->getMimeType();
+
+                // Load gambar
+                if (str_contains($mime, 'png')) {
+                    $src = imagecreatefrompng($path);
+                } else {
+                    $src = imagecreatefromjpeg($path);
+                }
+
+                // Resize max 800px
+                $w = imagesx($src);
+                $h = imagesy($src);
+                if ($w > 800) {
+                    $newW = 800;
+                    $newH = (int) round($h * 800 / $w);
+                } else {
+                    $newW = $w;
+                    $newH = $h;
+                }
+
+                $dst = imagecreatetruecolor($newW, $newH);
+                $white = imagecolorallocate($dst, 255, 255, 255);
+                imagefilledrectangle($dst, 0, 0, $newW, $newH, $white);
+                imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $w, $h);
+                imagedestroy($src);
+
+                // Output JPEG quality 70
+                ob_start();
+                imagejpeg($dst, null, 70);
+                $jpeg = ob_get_clean();
+                imagedestroy($dst);
+
+                $base64 = 'data:image/jpeg;base64,' . base64_encode($jpeg);
+
+                DB::table('photos')->insert([
+                    'source_type' => 'lost_found',
+                    'source_id'   => $lostFoundId,
+                    'file_name'   => $file->getClientOriginalName(),
+                    'file_path'   => '',
+                    'file_data'   => $base64,
+                    'file_type'   => 'image/jpeg',
+                    'file_size'   => strlen($jpeg),
+                    'uploaded_by' => Auth::id(),
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
             }
 
             DB::commit();
