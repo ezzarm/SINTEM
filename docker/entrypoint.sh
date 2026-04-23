@@ -4,10 +4,6 @@ set -e
 echo "==> [entrypoint] Starting SINTEM..."
 cd /var/www/html
 
-# ─────────────────────────────────────────────────────────────
-# 1. Write .env — support both Railway MySQL plugin vars and custom DB_* vars
-# ─────────────────────────────────────────────────────────────
-# Railway MySQL plugin injects: MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE
 _DB_HOST="${MYSQLHOST:-${DB_HOST:-127.0.0.1}}"
 _DB_PORT="${MYSQLPORT:-${DB_PORT:-3306}}"
 _DB_USER="${MYSQLUSER:-${MYSQLUSER:-${DB_USERNAME:-root}}}"
@@ -45,19 +41,11 @@ ENVEOF
 
 echo "==> [entrypoint] .env written."
 
-# ─────────────────────────────────────────────────────────────
-# 2. Generate APP_KEY if not set
-# ─────────────────────────────────────────────────────────────
 if [ -z "$APP_KEY" ]; then
     echo "WARNING: APP_KEY not set — generating temporary key."
     php artisan key:generate --force
 fi
 
-# ─────────────────────────────────────────────────────────────
-# 3. Wait for MySQL using PHP (works with Railway proxy + SSL)
-#    mysqladmin fails on Railway because the proxy requires a full
-#    TCP handshake that mysqladmin's ping doesn't complete properly.
-# ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Waiting for MySQL at ${_DB_HOST}:${_DB_PORT}..."
 max_tries=40
 count=0
@@ -84,15 +72,9 @@ until php -r "
 done
 echo "==> [entrypoint] MySQL is ready."
 
-# ─────────────────────────────────────────────────────────────
-# 4. Run migrations
-# ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Running migrations..."
 php artisan migrate --force 2>&1
 
-# ─────────────────────────────────────────────────────────────
-# 5. Seed on first deploy only
-# ─────────────────────────────────────────────────────────────
 USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1)
 if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
     echo "==> [entrypoint] Seeding initial data..."
@@ -101,9 +83,6 @@ else
     echo "==> [entrypoint] Database already seeded — skipping."
 fi
 
-# ─────────────────────────────────────────────────────────────
-# 6. Ensure upload directories exist (storage is ephemeral on Railway)
-# ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Creating storage directories..."
 mkdir -p storage/app/public/upload/photos/lost_found
 mkdir -p storage/app/public/upload/photos/event
@@ -116,16 +95,10 @@ mkdir -p storage/framework/views
 mkdir -p storage/logs
 mkdir -p bootstrap/cache
 
-# ─────────────────────────────────────────────────────────────
-# 7. Create storage symlink (remove existing dir first to avoid conflict)
-# ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Linking storage..."
 rm -rf public/storage
 php artisan storage:link --force
 
-# ─────────────────────────────────────────────────────────────
-# 8. Warm caches AFTER .env + DB are ready
-# ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Clearing old caches..."
 php artisan config:clear
 php artisan route:clear
@@ -137,15 +110,9 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# ─────────────────────────────────────────────────────────────
-# 9. Fix permissions
-# ─────────────────────────────────────────────────────────────
 chown -R www-data:www-data storage bootstrap/cache public/storage
 chmod -R 775 storage bootstrap/cache
 
 echo "==> [entrypoint] Bootstrap complete. Starting services..."
 
-# ─────────────────────────────────────────────────────────────
-# 10. Start nginx + php-fpm
-# ─────────────────────────────────────────────────────────────
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf

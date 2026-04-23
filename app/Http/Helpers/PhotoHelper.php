@@ -7,10 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class PhotoHelper
 {
-    /**
-     * Resize foto, encode base64, simpan langsung ke kolom file_data di tabel photos.
-     * TIDAK menyentuh storage/disk sama sekali.
-     */
     public static function store(
         UploadedFile $file,
         string $sourceType,
@@ -20,12 +16,10 @@ class PhotoHelper
         $mime = $file->getMimeType() ?? 'image/jpeg';
         $path = $file->getRealPath();
 
-        // Use imagecreatefromstring — works for jpg, png, gif, webp automatically
         $rawBytes = file_get_contents($path);
         $src = @imagecreatefromstring($rawBytes);
 
         if ($src === false) {
-            // GD can't decode it — store raw bytes as-is without resize
             DB::table('photos')->insert([
                 'source_type' => $sourceType,
                 'source_id'   => $sourceId,
@@ -85,10 +79,6 @@ class PhotoHelper
             ->delete();
     }
 
-    /**
-     * Ambil URL/data-URI foto dari record DB.
-     * Selalu dari file_data (base64), tidak pernah ke Storage.
-     */
     public static function url(?object $photo): ?string
     {
         if (!$photo) return null;
