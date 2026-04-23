@@ -21,6 +21,8 @@ class LaporanController extends Controller
 
     public function store(Request $request)
     {
+        // ── DIAGNOSTIC: tangkap semua error dan tampilkan, jangan 500 ──
+        set_exception_handler(null);
         try {
             $request->validate([
                 'category_id'    => 'required|integer|exists:report_categories,id',
@@ -46,7 +48,6 @@ class LaporanController extends Controller
                 PhotoHelper::store($request->file('photo'), 'anonymous_report', $reportId, null);
             }
 
-            // Simpan tiket ke session supaya user bisa tracking
             $myTickets   = session('my_tickets', []);
             $myTickets[] = $ticket;
             session(['my_tickets' => $myTickets]);
@@ -57,7 +58,25 @@ class LaporanController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
-            return back()->with('error', 'Gagal mengirim laporan: ' . $e->getMessage())->withInput();
+            // Tampilkan error detail supaya bisa di-debug — HAPUS setelah fix
+            return response()->json([
+                'error'   => $e->getMessage(),
+                'class'   => get_class($e),
+                'file'    => str_replace(base_path(), '', $e->getFile()),
+                'line'    => $e->getLine(),
+                'trace'   => collect($e->getTrace())->take(8)->map(fn($t) => [
+                    'file' => str_replace(base_path(), '', $t['file'] ?? ''),
+                    'line' => $t['line'] ?? '',
+                    'func' => ($t['class'] ?? '') . ($t['type'] ?? '') . ($t['function'] ?? ''),
+                ])->toArray(),
+                'request' => [
+                    'has_photo'      => $request->hasFile('photo'),
+                    'category_id'    => $request->category_id,
+                    'has_content'    => !empty($request->report_content),
+                    'content_length' => strlen($request->report_content ?? ''),
+                    'photo_error'    => $request->hasFile('photo') ? $request->file('photo')->getError() : null,
+                ],
+            ], 200);
         }
     }
 
