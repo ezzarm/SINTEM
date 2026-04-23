@@ -5,12 +5,66 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Http\Helpers\PhotoHelper;
 
 class LaporanController extends Controller
 {
+    private function savePhoto($file, string $sourceType, int $sourceId, ?int $uploadedBy): void
+    {
+        $path = $file->getRealPath();
+        $mime = $file->getMimeType();
+
+        if (str_contains($mime, 'png')) {
+            $src = imagecreatefrompng($path);
+        } else {
+            $src = imagecreatefromjpeg($path);
+        }
+
+        $w = imagesx($src);
+        $h = imagesy($src);
+
+        if ($w > 800) {
+            $newW = 800;
+            $newH = (int) round($h * 800 / $w);
+        } else {
+            $newW = $w;
+            $newH = $h;
+        }
+
+        $dst   = imagecreatetruecolor($newW, $newH);
+        $white = imagecolorallocate($dst, 255, 255, 255);
+        imagefilledrectangle($dst, 0, 0, $newW, $newH, $white);
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $w, $h);
+        imagedestroy($src);
+
+        ob_start();
+        imagejpeg($dst, null, 70);
+        $jpeg = ob_get_clean();
+        imagedestroy($dst);
+
+        DB::table('photos')->insert([
+            'source_type' => $sourceType,
+            'source_id'   => $sourceId,
+            'file_name'   => $file->getClientOriginalName(),
+            'file_path'   => '',
+            'file_data'   => 'data:image/jpeg;base64,' . base64_encode($jpeg),
+            'file_type'   => 'image/jpeg',
+            'file_size'   => strlen($jpeg),
+            'uploaded_by' => $uploadedBy,
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+    }
+
+    private function deletePhoto(string $sourceType, int $sourceId): void
+    {
+        DB::table('photos')
+            ->where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->delete();
+    }
+
     // ==========================================
-    // BAGIAN 1: LAPORAN ANONIM (TKT-XXX)
+    // BAGIAN 1: LAPORAN ANONIM
     // ==========================================
 
     public function create()
@@ -21,41 +75,17 @@ class LaporanController extends Controller
 
     public function store(Request $request)
     {
-        try {
-            $request->validate([
-                'category_id'    => 'required|integer|exists:report_categories,id',
-                'report_content' => 'required|string',
-                'photo'          => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
-            ]);
-
-            $lastId = DB::table('anonymous_reports')->max('id') ?? 0;
-            $ticket = 'TKT-' . str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
-
-            $reportId = DB::table('anonymous_reports')->insertGetId([
-                'ticket_number'  => $ticket,
-                'category_id'    => $request->category_id,
-                'report_content' => $request->report_content,
-                'status'         => 'pending',
-                'created_at'     => now(),
-                'updated_at'     => now(),
-            ]);
-
-            if ($request->hasFile('photo')) {
-                PhotoHelper::store($request->file('photo'), 'anonymous_report', $reportId, null);
-            }
-
-            $tickets   = session('my_tickets', []);
-            $tickets[] = $ticket;
-            session(['my_tickets' => $tickets]);
-
-            return redirect()->route('laporan.anonim')
-                ->with('success', "Laporan anonim berhasil dikirim. Nomor tiket: {$ticket}");
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->errors())->withInput();
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Gagal mengirim laporan: ' . $e->getMessage())->withInput();
-        }
+        dd([
+            'has_photo'  => $request->hasFile('photo'),
+            'all_fields' => $request->except('photo'),
+            'photo_info' => $request->hasFile('photo') ? [
+                'name'  => $request->file('photo')->getClientOriginalName(),
+                'size'  => $request->file('photo')->getSize(),
+                'mime'  => $request->file('photo')->getMimeType(),
+                'valid' => $request->file('photo')->isValid(),
+                'error' => $request->file('photo')->getError(),
+            ] : null,
+        ]);
     }
 
     public function anonim(Request $request)
@@ -98,7 +128,7 @@ class LaporanController extends Controller
             return redirect()->route('laporan.anonim')->with('error', 'Laporan tidak ditemukan.');
         }
 
-        PhotoHelper::delete('anonymous_report', $id);
+        $this->deletePhoto('anonymous_report', $id);
         DB::table('anonymous_reports')->where('id', $id)->delete();
 
         $updated = array_values(array_filter($myTickets, fn($t) => $t !== $report->ticket_number));
@@ -132,9 +162,7 @@ class LaporanController extends Controller
             $photoMap = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
-                ->get()
-                ->keyBy('source_id')
-                ->toArray();
+                ->get()->keyBy('source_id')->toArray();
         }
 
         return view('laporan.temuan', compact('items', 'sort', 'search', 'photoMap'));
@@ -148,7 +176,7 @@ class LaporanController extends Controller
                 'item_name'   => 'required|string|max:100',
                 'description' => 'nullable|string',
                 'found_at'    => 'nullable|string|max:150',
-                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 
             $reportId = DB::table('lost_founds')->insertGetId([
@@ -163,7 +191,7 @@ class LaporanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                PhotoHelper::store($request->file('photo'), 'lost_found', $reportId, Auth::id());
+                $this->savePhoto($request->file('photo'), 'lost_found', $reportId, Auth::id());
             }
 
             return redirect()->route('laporan.temuan')
@@ -184,7 +212,7 @@ class LaporanController extends Controller
                 'item_name'   => 'required|string|max:100',
                 'description' => 'nullable|string',
                 'found_at'    => 'nullable|string|max:150',
-                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
+                'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 
             $report = DB::table('lost_founds')
@@ -194,8 +222,7 @@ class LaporanController extends Controller
                 ->first();
 
             if (!$report) {
-                return redirect()->route('laporan.temuan')
-                    ->with('error', 'Laporan tidak ditemukan.');
+                return redirect()->route('laporan.temuan')->with('error', 'Laporan tidak ditemukan.');
             }
 
             DB::table('lost_founds')->where('id', $id)->update([
@@ -207,12 +234,11 @@ class LaporanController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                PhotoHelper::delete('lost_found', $id);
-                PhotoHelper::store($request->file('photo'), 'lost_found', $id, Auth::id());
+                $this->deletePhoto('lost_found', $id);
+                $this->savePhoto($request->file('photo'), 'lost_found', $id, Auth::id());
             }
 
-            return redirect()->route('laporan.temuan')
-                ->with('success', 'Laporan berhasil diperbarui.');
+            return redirect()->route('laporan.temuan')->with('success', 'Laporan berhasil diperbarui.');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
@@ -230,14 +256,12 @@ class LaporanController extends Controller
             ->first();
 
         if (!$report) {
-            return redirect()->route('laporan.temuan')
-                ->with('error', 'Laporan tidak bisa dihapus.');
+            return redirect()->route('laporan.temuan')->with('error', 'Laporan tidak bisa dihapus.');
         }
 
-        PhotoHelper::delete('lost_found', $id);
+        $this->deletePhoto('lost_found', $id);
         DB::table('lost_founds')->where('id', $id)->delete();
 
-        return redirect()->route('laporan.temuan')
-            ->with('success', 'Laporan berhasil dihapus.');
+        return redirect()->route('laporan.temuan')->with('success', 'Laporan berhasil dihapus.');
     }
 }
