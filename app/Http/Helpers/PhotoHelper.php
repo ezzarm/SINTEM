@@ -17,15 +17,28 @@ class PhotoHelper
         int $sourceId,
         ?int $uploadedBy = null
     ): void {
-        $mime = $file->getMimeType();
+        $mime = $file->getMimeType() ?? 'image/jpeg';
         $path = $file->getRealPath();
 
-        if (str_contains($mime, 'png')) {
-            $src = imagecreatefrompng($path);
-        } elseif (str_contains($mime, 'gif')) {
-            $src = imagecreatefromgif($path);
-        } else {
-            $src = imagecreatefromjpeg($path);
+        // Use imagecreatefromstring — works for jpg, png, gif, webp automatically
+        $rawBytes = file_get_contents($path);
+        $src = @imagecreatefromstring($rawBytes);
+
+        if ($src === false) {
+            // GD can't decode it — store raw bytes as-is without resize
+            DB::table('photos')->insert([
+                'source_type' => $sourceType,
+                'source_id'   => $sourceId,
+                'file_name'   => $file->getClientOriginalName(),
+                'file_path'   => '',
+                'file_data'   => 'data:' . $mime . ';base64,' . base64_encode($rawBytes),
+                'file_type'   => $mime,
+                'file_size'   => strlen($rawBytes),
+                'uploaded_by' => $uploadedBy,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ]);
+            return;
         }
 
         $origW = imagesx($src);
@@ -54,7 +67,7 @@ class PhotoHelper
             'source_type' => $sourceType,
             'source_id'   => $sourceId,
             'file_name'   => $file->getClientOriginalName(),
-            'file_path'   => '',                                          // selalu kosong, tidak pakai storage
+            'file_path'   => '',
             'file_data'   => 'data:image/jpeg;base64,' . base64_encode($jpeg),
             'file_type'   => 'image/jpeg',
             'file_size'   => strlen($jpeg),
