@@ -126,6 +126,12 @@ php artisan storage:link --force
 # ─────────────────────────────────────────────────────────────
 # 8. Warm caches AFTER .env + DB are ready
 # ─────────────────────────────────────────────────────────────
+echo "==> [entrypoint] Clearing old caches..."
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+
 echo "==> [entrypoint] Warming caches..."
 php artisan config:cache
 php artisan route:cache
