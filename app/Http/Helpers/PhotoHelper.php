@@ -4,10 +4,13 @@ namespace App\Http\Helpers;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class PhotoHelper
 {
+    /**
+     * Resize foto, encode base64, simpan langsung ke kolom file_data di tabel photos.
+     * TIDAK menyentuh storage/disk sama sekali.
+     */
     public static function store(
         UploadedFile $file,
         string $sourceType,
@@ -36,7 +39,7 @@ class PhotoHelper
             $newH = $origH;
         }
 
-        $dst = imagecreatetruecolor($newW, $newH);
+        $dst   = imagecreatetruecolor($newW, $newH);
         $white = imagecolorallocate($dst, 255, 255, 255);
         imagefilledrectangle($dst, 0, 0, $newW, $newH, $white);
         imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
@@ -47,14 +50,12 @@ class PhotoHelper
         $jpeg = ob_get_clean();
         imagedestroy($dst);
 
-        $base64 = 'data:image/jpeg;base64,' . base64_encode($jpeg);
-
         DB::table('photos')->insert([
             'source_type' => $sourceType,
             'source_id'   => $sourceId,
             'file_name'   => $file->getClientOriginalName(),
-            'file_path'   => '',
-            'file_data'   => $base64,
+            'file_path'   => '',                                          // selalu kosong, tidak pakai storage
+            'file_data'   => 'data:image/jpeg;base64,' . base64_encode($jpeg),
             'file_type'   => 'image/jpeg',
             'file_size'   => strlen($jpeg),
             'uploaded_by' => $uploadedBy,
@@ -71,18 +72,13 @@ class PhotoHelper
             ->delete();
     }
 
+    /**
+     * Ambil URL/data-URI foto dari record DB.
+     * Selalu dari file_data (base64), tidak pernah ke Storage.
+     */
     public static function url(?object $photo): ?string
     {
         if (!$photo) return null;
-
-        if (!empty($photo->file_path)) {
-            return Storage::disk('public')->url($photo->file_path);
-        }
-
-        if (!empty($photo->file_data)) {
-            return $photo->file_data;
-        }
-
-        return null;
+        return !empty($photo->file_data) ? $photo->file_data : null;
     }
 }
