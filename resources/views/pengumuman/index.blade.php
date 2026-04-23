@@ -239,7 +239,7 @@
                     @foreach($files as $file)
                         @if(str_starts_with($file->file_type, 'image'))
                         <div class="pg-image">
-                            <img src="{{ ($file->file_path ? asset('storage/' . $file->file_path) : $file->file_data) }}"
+                            <img src="{{ $file->file_data }}"
                                  alt="{{ $file->file_name }}"
                                  onerror="this.parentElement.style.display='none'">
                         </div>
