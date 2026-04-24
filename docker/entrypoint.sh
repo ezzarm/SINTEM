@@ -4,57 +4,32 @@ set -e
 echo "==> [entrypoint] Starting SINTEM..."
 cd /var/www/html
 
-_DB_HOST="${DB_HOST:-aws-0-ap-southeast-1.pooler.supabase.com}"
-_DB_PORT="${DB_PORT:-6543}"
-_DB_USER="${DB_USERNAME:-postgres.ehbmbivtxlnjobtpixsw}"
-_DB_PASS="${DB_PASSWORD:-sintempass12}"
-_DB_NAME="${DB_DATABASE:-postgres}"
-_SUPABASE_URL="${SUPABASE_URL:-https://ehbmbivtxlnjobtpixsw.supabase.co}"
-_SUPABASE_KEY="${SUPABASE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoYm1iaXZ0eGxuam9idHBpeHN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njk0NjAyOCwiZXhwIjoyMDkyNTIyMDI4fQ.NBsfZmDmXMMPQOidSTu6c_OsQ6BvfNOobmeVY3qRDJQ}"
-_SUPABASE_BUCKET="${SUPABASE_BUCKET:-sintem-files}"
-
-cat > /var/www/html/.env << ENVEOF
-APP_NAME="${APP_NAME:-SINTEM}"
-APP_ENV="${APP_ENV:-production}"
-APP_KEY="${APP_KEY:-}"
-APP_DEBUG="${APP_DEBUG:-false}"
-APP_URL="${APP_URL:-http://localhost}"
-
-LOG_CHANNEL=stderr
-LOG_LEVEL="${LOG_LEVEL:-error}"
-
-DB_CONNECTION=pgsql
-DB_HOST=${_DB_HOST}
-DB_PORT=${_DB_PORT}
-DB_DATABASE=${_DB_NAME}
-DB_USERNAME=${_DB_USER}
-DB_PASSWORD=${_DB_PASS}
-DB_SSLMODE=require
-
-SUPABASE_URL=${_SUPABASE_URL}
-SUPABASE_KEY=${_SUPABASE_KEY}
-SUPABASE_BUCKET=${_SUPABASE_BUCKET}
-
-SESSION_DRIVER=file
-SESSION_LIFETIME=${SESSION_LIFETIME:-120}
-SESSION_ENCRYPT=false
-SESSION_SECURE_COOKIE=false
-SESSION_SAME_SITE=lax
-TRUSTED_PROXIES=*
-
-CACHE_STORE=file
-QUEUE_CONNECTION=sync
-FILESYSTEM_DISK=local
-ENVEOF
-
-echo "==> [entrypoint] .env written."
-
-if [ -z "$APP_KEY" ]; then
-    echo "==> [entrypoint] Generating APP_KEY..."
-    php artisan key:generate --force
+# Override from Railway env vars jika ada
+if [ -n "$DB_HOST" ]; then
+    sed -i "s|^DB_HOST=.*|DB_HOST=${DB_HOST}|" .env
+fi
+if [ -n "$DB_PORT" ]; then
+    sed -i "s|^DB_PORT=.*|DB_PORT=${DB_PORT}|" .env
+fi
+if [ -n "$DB_USERNAME" ]; then
+    sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME}|" .env
+fi
+if [ -n "$DB_PASSWORD" ]; then
+    sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" .env
+fi
+if [ -n "$APP_KEY" ]; then
+    sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env
+fi
+if [ -n "$APP_URL" ]; then
+    sed -i "s|^APP_URL=.*|APP_URL=${APP_URL}|" .env
+fi
+if [ -n "$APP_DEBUG" ]; then
+    sed -i "s|^APP_DEBUG=.*|APP_DEBUG=${APP_DEBUG}|" .env
 fi
 
-echo "==> [entrypoint] Clearing & warming caches..."
+echo "==> [entrypoint] .env ready."
+echo "==> [entrypoint] DB_HOST=$(grep ^DB_HOST .env)"
+
 php artisan config:clear 2>/dev/null || true
 php artisan route:clear  2>/dev/null || true
 php artisan view:clear   2>/dev/null || true
