@@ -88,6 +88,7 @@ RUN docker-php-ext-configure gd \
 WORKDIR /var/www/html
 
 COPY . .
+RUN rm -f bootstrap/cache/config.php bootstrap/cache/routes*.php bootstrap/cache/services.php bootstrap/cache/packages.php
 COPY --from=composer-builder /app/vendor ./vendor
 COPY --from=node-builder /app/public/build ./public/build
 
