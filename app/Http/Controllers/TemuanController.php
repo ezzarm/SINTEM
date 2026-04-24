@@ -25,7 +25,7 @@ class TemuanController extends Controller
         }
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('lost_founds.item_name', 'like', "%{$search}%")
+                $q->where('lost_founds.item_name',    'like', "%{$search}%")
                   ->orWhere('lost_founds.description', 'like', "%{$search}%");
             });
         }
@@ -36,10 +36,15 @@ class TemuanController extends Controller
         $ids      = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
-            $photoMap = DB::table('photos')
+            $photos = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
-                ->get()->keyBy('source_id')->toArray();
+                ->get();
+
+            foreach ($photos as $p) {
+                $p->resolved_url = PhotoHelper::url($p);
+                $photoMap[$p->source_id] = $p;
+            }
         }
 
         $recentAnnouncements = DB::table('announcements')

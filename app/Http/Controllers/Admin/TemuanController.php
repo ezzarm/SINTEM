@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Helpers\PhotoHelper;
+use App\Services\SupabaseStorageService;
 
 class TemuanController extends Controller
 {
@@ -30,9 +31,9 @@ class TemuanController extends Controller
         }
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('lost_founds.item_name', 'like', "%{$search}%")
+                $q->where('lost_founds.item_name',   'like', "%{$search}%")
                   ->orWhere('lost_founds.description', 'like', "%{$search}%")
-                  ->orWhere('lost_founds.found_at', 'like', "%{$search}%");
+                  ->orWhere('lost_founds.found_at',    'like', "%{$search}%");
             });
         }
 
@@ -41,15 +42,18 @@ class TemuanController extends Controller
         $total = $query->count();
         $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
-        $ids = $items->pluck('id')->toArray();
+        $ids      = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
-    
-            $photoMap = DB::table('photos')
+            $photos = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
-                ->get()
-                ->keyBy('source_id');  // ← Hasil: Collection, tiap item adalah object stdClass
+                ->get();
+
+            foreach ($photos as $p) {
+                $p->resolved_url = PhotoHelper::url($p);
+                $photoMap[$p->source_id] = $p;
+            }
         }
 
         return view('admin.temuan.index', compact(

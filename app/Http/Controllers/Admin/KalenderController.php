@@ -1,13 +1,12 @@
 <?php
-// app/Http/Controllers/Admin/KalenderController.php
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Helpers\PhotoHelper;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class KalenderController extends Controller
 {
@@ -41,8 +40,8 @@ class KalenderController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('events.event_name',  'like', "%$search%")
-                  ->orWhere('events.description','like', "%$search%");
+                $q->where('events.event_name',   'like', "%$search%")
+                  ->orWhere('events.description', 'like', "%$search%");
             });
         }
 
@@ -52,17 +51,16 @@ class KalenderController extends Controller
 
         $query->orderBy('events.event_date', $sort === 'terlama' ? 'asc' : 'desc');
 
-        $total = $query->count();
-        $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        $total   = $query->count();
+        $items   = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
+        $storage = app(SupabaseStorageService::class);
 
-        // Ambil foto dengan URL yang benar (bukan raw base64 lagi)
         foreach ($items as $item) {
             $photo = DB::table('photos')
                 ->where('source_type', 'event')
                 ->where('source_id', $item->id)
                 ->first();
             $item->photo_url  = PhotoHelper::url($photo);
-            // Backward compat: view lama yang masih pakai photo_data
             $item->photo_data = $item->photo_url;
         }
 
@@ -158,7 +156,21 @@ class KalenderController extends Controller
     public function destroy($id)
     {
         try {
+            $storage = app(SupabaseStorageService::class);
+
             PhotoHelper::delete('event', $id);
+
+            $attachments = DB::table('attachments')
+                ->where('source_type', 'event')
+                ->where('source_id', $id)
+                ->get();
+
+            foreach ($attachments as $att) {
+                if (!empty($att->file_path)) {
+                    $storage->delete($att->file_path);
+                }
+            }
+
             DB::table('attachments')->where('source_type', 'event')->where('source_id', $id)->delete();
             DB::table('events')->where('id', $id)->delete();
 

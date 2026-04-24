@@ -1,39 +1,31 @@
 <?php
-// app/Providers/AppServiceProvider.php
 
 namespace App\Providers;
 
+use App\Services\SupabaseStorageService;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->singleton(SupabaseStorageService::class, function ($app) {
+            return new SupabaseStorageService();
+        });
     }
 
     public function boot(): void
     {
-        // ── Force HTTPS in production ──────────────────────────────────
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
-        }
+        RedirectIfAuthenticated::redirectUsing(function ($request) {
+            $user = auth()->user();
+            if (!$user) return route('login');
 
-        // ── Allow APP_DEBUG=true in production for Railway debugging ──
-        // Uncomment the block below AFTER debugging is complete:
-        // if ($this->app->environment('production') && config('app.debug')) {
-        //     Log::critical('APP_DEBUG is true in production! Forcing to false.');
-        //     config(['app.debug' => false]);
-        // }
-
-        // ── Log slow DB queries (> 2 seconds) in production ───────────
-        if ($this->app->environment('production')) {
-            DB::whenQueryingForLongerThan(2000, function () {
-                Log::warning('Slow database query detected (> 2s).');
-            });
-        }
+            return match((int) $user->role_id) {
+                1       => route('superadmin.accounts.index'),
+                2       => route('pengumuman.index'),
+                default => route('admin.pengumuman.index'),
+            };
+        });
     }
 }

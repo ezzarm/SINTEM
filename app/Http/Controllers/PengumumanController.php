@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Helpers\PhotoHelper;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +14,6 @@ class PengumumanController extends Controller
         $sort   = $request->get('sort', 'terbaru');
         $search = $request->get('search', '');
 
-        // ── Announcements ──
         $announcements = DB::table('announcements')
             ->join('users', 'announcements.created_by', '=', 'users.id')
             ->where('announcements.is_published', 1)
@@ -25,7 +26,6 @@ class PengumumanController extends Controller
                 DB::raw("'announcement' as type")
             );
 
-        // ── Events ──
         $events = DB::table('events')
             ->join('users', 'events.created_by', '=', 'users.id')
             ->join('event_categories', 'events.category_id', '=', 'event_categories.id')
@@ -35,7 +35,7 @@ class PengumumanController extends Controller
                 'events.id',
                 'events.event_name as title',
                 'events.description as content',
-                DB::raw('CAST(events.event_date AS DATETIME) as created_at'),
+                DB::raw('CAST(events.event_date AS TIMESTAMP) as created_at'),
                 'users.name as author',
                 'event_categories.name as category_name',
                 'event_categories.color as category_color',
@@ -43,7 +43,6 @@ class PengumumanController extends Controller
                 DB::raw("'event' as type")
             );
 
-        // ── Lost & Found ──
         $lostFounds = DB::table('lost_founds')
             ->join('users', 'lost_founds.user_id', '=', 'users.id')
             ->where('lost_founds.status', 'approved')
@@ -58,34 +57,30 @@ class PengumumanController extends Controller
                 DB::raw("'lost_found' as type")
             );
 
-        // Apply search
         if ($search) {
             $announcements->where(function ($q) use ($search) {
-                $q->where('announcements.title',   'like', "%$search%")
+                $q->where('announcements.title',    'like', "%$search%")
                   ->orWhere('announcements.content', 'like', "%$search%");
             });
             $events->where(function ($q) use ($search) {
-                $q->where('events.event_name',    'like', "%$search%")
-                  ->orWhere('events.description',  'like', "%$search%");
+                $q->where('events.event_name',   'like', "%$search%")
+                  ->orWhere('events.description', 'like', "%$search%");
             });
             $lostFounds->where(function ($q) use ($search) {
-                $q->where('lost_founds.item_name',   'like', "%$search%")
+                $q->where('lost_founds.item_name',    'like', "%$search%")
                   ->orWhere('lost_founds.description', 'like', "%$search%");
             });
         }
 
-        // Merge all three
         $items = collect()
             ->merge($announcements->get())
             ->merge($events->get())
             ->merge($lostFounds->get());
 
-        // Sort
         $items = $sort === 'terlama'
             ? $items->sortBy('created_at')->values()
             : $items->sortByDesc('created_at')->values();
 
-        // ── Fetch photos from photos table ──
         $attachmentMap = [];
         foreach ($items as $item) {
             $sourceType = match($item->type) {
@@ -93,10 +88,17 @@ class PengumumanController extends Controller
                 'lost_found' => 'lost_found',
                 default      => 'announcement',
             };
-            $attachmentMap[$item->type . '_' . $item->id] = DB::table('photos')
+
+            $photos = DB::table('photos')
                 ->where('source_type', $sourceType)
                 ->where('source_id', $item->id)
                 ->get();
+
+            foreach ($photos as $p) {
+                $p->resolved_url = PhotoHelper::url($p);
+            }
+
+            $attachmentMap[$item->type . '_' . $item->id] = $photos;
         }
 
         return view('pengumuman.index', compact(

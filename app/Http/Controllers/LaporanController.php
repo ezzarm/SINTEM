@@ -3,16 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Helpers\PhotoHelper;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
-    // ==========================================
-    // BAGIAN 1: LAPORAN ANONIM
-    // ==========================================
-
     public function create()
     {
         $categories = DB::table('report_categories')->orderBy('id')->get();
@@ -21,8 +18,6 @@ class LaporanController extends Controller
 
     public function store(Request $request)
     {
-        // ── DIAGNOSTIC: tangkap semua error dan tampilkan, jangan 500 ──
-        set_exception_handler(null);
         try {
             $request->validate([
                 'category_id'    => 'required|integer|exists:report_categories,id',
@@ -30,7 +25,6 @@ class LaporanController extends Controller
                 'photo'          => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
             ]);
 
-            // Generate unique ticket number, e.g. TKT-00123
             do {
                 $ticket = 'TKT-' . str_pad(random_int(1, 99999), 5, '0', STR_PAD_LEFT);
             } while (DB::table('anonymous_reports')->where('ticket_number', $ticket)->exists());
@@ -58,25 +52,7 @@ class LaporanController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         } catch (\Throwable $e) {
-            // Tampilkan error detail supaya bisa di-debug — HAPUS setelah fix
-            return response()->json([
-                'error'   => $e->getMessage(),
-                'class'   => get_class($e),
-                'file'    => str_replace(base_path(), '', $e->getFile()),
-                'line'    => $e->getLine(),
-                'trace'   => collect($e->getTrace())->take(8)->map(fn($t) => [
-                    'file' => str_replace(base_path(), '', $t['file'] ?? ''),
-                    'line' => $t['line'] ?? '',
-                    'func' => ($t['class'] ?? '') . ($t['type'] ?? '') . ($t['function'] ?? ''),
-                ])->toArray(),
-                'request' => [
-                    'has_photo'      => $request->hasFile('photo'),
-                    'category_id'    => $request->category_id,
-                    'has_content'    => !empty($request->report_content),
-                    'content_length' => strlen($request->report_content ?? ''),
-                    'photo_error'    => $request->hasFile('photo') ? $request->file('photo')->getError() : null,
-                ],
-            ], 200);
+            return back()->with('error', 'Gagal menyimpan laporan: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -129,10 +105,6 @@ class LaporanController extends Controller
         return redirect()->route('laporan.anonim')->with('success', 'Laporan berhasil dihapus.');
     }
 
-    // ==========================================
-    // BAGIAN 2: LAPORAN TEMUAN (LOST & FOUND)
-    // ==========================================
-
     public function temuan(Request $request)
     {
         $sort   = $request->get('sort', 'terbaru');
@@ -151,10 +123,15 @@ class LaporanController extends Controller
         $ids      = $items->pluck('id')->toArray();
         $photoMap = [];
         if (!empty($ids)) {
-            $photoMap = DB::table('photos')
+            $photos = DB::table('photos')
                 ->where('source_type', 'lost_found')
                 ->whereIn('source_id', $ids)
-                ->get()->keyBy('source_id')->toArray();
+                ->get();
+
+            foreach ($photos as $p) {
+                $p->resolved_url = PhotoHelper::url($p);
+                $photoMap[$p->source_id] = $p;
+            }
         }
 
         return view('laporan.temuan', compact('items', 'sort', 'search', 'photoMap'));

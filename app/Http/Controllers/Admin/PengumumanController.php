@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Helpers\PhotoHelper;
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -44,11 +45,21 @@ class PengumumanController extends Controller
         $total = $query->count();
         $items = $query->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
+        $storage = app(SupabaseStorageService::class);
+
         foreach ($items as $item) {
-            $item->photos = DB::table('photos')
+            $photos = DB::table('photos')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $item->id)
                 ->get();
+
+            foreach ($photos as $p) {
+                if (!empty($p->file_path) && empty($p->file_data)) {
+                    $p->file_data = $storage->publicUrl($p->file_path);
+                }
+            }
+            $item->photos = $photos;
+
             $item->attachments = DB::table('attachments')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $item->id)
@@ -64,10 +75,10 @@ class PengumumanController extends Controller
     {
         try {
             $request->validate([
-                'title'        => 'required|string|max:255',
-                'content'      => 'required|string',
-                'is_published' => 'required|in:0,1',
-                'photo'        => 'nullable|image|max:10240',
+                'title'           => 'required|string|max:255',
+                'content'         => 'required|string',
+                'is_published'    => 'required|in:0,1',
+                'photo'           => 'nullable|image|max:10240',
                 'attachment_file' => 'nullable|file|max:10240',
             ]);
 
@@ -80,7 +91,6 @@ class PengumumanController extends Controller
                 'updated_at'   => now(),
             ]);
 
-            // Foto → langsung ke DB via PhotoHelper
             if ($request->hasFile('photo')) {
                 PhotoHelper::store(
                     $request->file('photo'),
@@ -90,18 +100,19 @@ class PengumumanController extends Controller
                 );
             }
 
-            // Attachment file → base64 langsung ke DB, tidak ke storage
             if ($request->hasFile('attachment_file')) {
-                $file     = $request->file('attachment_file');
-                $fileData = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                $file    = $request->file('attachment_file');
+                $storage = app(SupabaseStorageService::class);
+                $path    = $storage->upload($file, 'attachments/announcement');
+                $url     = $storage->publicUrl($path);
 
                 DB::table('attachments')->insert([
                     'source_type'     => 'announcement',
                     'source_id'       => $announcementId,
                     'attachment_type' => 'file',
                     'file_name'       => $file->getClientOriginalName(),
-                    'file_path'       => '',
-                    'file_data'       => $fileData,
+                    'file_path'       => $path,
+                    'link_url'        => $url,
                     'file_type'       => $file->getMimeType(),
                     'file_size'       => $file->getSize(),
                     'label'           => $request->attachment_label ?? null,
@@ -149,22 +160,35 @@ class PengumumanController extends Controller
             }
 
             if ($request->hasFile('attachment_file')) {
-                $file     = $request->file('attachment_file');
-                $fileData = 'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getRealPath()));
+                $storage = app(SupabaseStorageService::class);
 
-                // Hapus attachment lama dulu
+                $oldAttachments = DB::table('attachments')
+                    ->where('source_type', 'announcement')
+                    ->where('source_id', $id)
+                    ->get();
+
+                foreach ($oldAttachments as $att) {
+                    if (!empty($att->file_path)) {
+                        $storage->delete($att->file_path);
+                    }
+                }
+
                 DB::table('attachments')
                     ->where('source_type', 'announcement')
                     ->where('source_id', $id)
                     ->delete();
+
+                $file = $request->file('attachment_file');
+                $path = $storage->upload($file, 'attachments/announcement');
+                $url  = $storage->publicUrl($path);
 
                 DB::table('attachments')->insert([
                     'source_type'     => 'announcement',
                     'source_id'       => $id,
                     'attachment_type' => 'file',
                     'file_name'       => $file->getClientOriginalName(),
-                    'file_path'       => '',
-                    'file_data'       => $fileData,
+                    'file_path'       => $path,
+                    'link_url'        => $url,
                     'file_type'       => $file->getMimeType(),
                     'file_size'       => $file->getSize(),
                     'label'           => $request->attachment_label ?? null,
@@ -186,9 +210,21 @@ class PengumumanController extends Controller
     public function destroy($id)
     {
         try {
+            $storage = app(SupabaseStorageService::class);
+
             PhotoHelper::delete('announcement', $id);
 
-            // Hapus attachment langsung dari DB (tidak ada file di disk)
+            $attachments = DB::table('attachments')
+                ->where('source_type', 'announcement')
+                ->where('source_id', $id)
+                ->get();
+
+            foreach ($attachments as $att) {
+                if (!empty($att->file_path)) {
+                    $storage->delete($att->file_path);
+                }
+            }
+
             DB::table('attachments')
                 ->where('source_type', 'announcement')
                 ->where('source_id', $id)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Helpers;
 
+use App\Services\SupabaseStorageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -13,58 +14,19 @@ class PhotoHelper
         int $sourceId,
         ?int $uploadedBy = null
     ): void {
-        $mime = $file->getMimeType() ?? 'image/jpeg';
-        $path = $file->getRealPath();
-
-        $rawBytes = file_get_contents($path);
-        $src = @imagecreatefromstring($rawBytes);
-
-        if ($src === false) {
-            DB::table('photos')->insert([
-                'source_type' => $sourceType,
-                'source_id'   => $sourceId,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => '',
-                'file_data'   => 'data:' . $mime . ';base64,' . base64_encode($rawBytes),
-                'file_type'   => $mime,
-                'file_size'   => strlen($rawBytes),
-                'uploaded_by' => $uploadedBy,
-                'created_at'  => now(),
-                'updated_at'  => now(),
-            ]);
-            return;
-        }
-
-        $origW = imagesx($src);
-        $origH = imagesy($src);
-
-        if ($origW > 800) {
-            $newW = 800;
-            $newH = (int) round($origH * 800 / $origW);
-        } else {
-            $newW = $origW;
-            $newH = $origH;
-        }
-
-        $dst   = imagecreatetruecolor($newW, $newH);
-        $white = imagecolorallocate($dst, 255, 255, 255);
-        imagefilledrectangle($dst, 0, 0, $newW, $newH, $white);
-        imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
-        imagedestroy($src);
-
-        ob_start();
-        imagejpeg($dst, null, 75);
-        $jpeg = ob_get_clean();
-        imagedestroy($dst);
+        $storage = app(SupabaseStorageService::class);
+        $folder  = 'photos/' . $sourceType;
+        $path    = $storage->uploadResized($file, $folder);
+        $url     = $storage->publicUrl($path);
 
         DB::table('photos')->insert([
             'source_type' => $sourceType,
             'source_id'   => $sourceId,
             'file_name'   => $file->getClientOriginalName(),
-            'file_path'   => '',
-            'file_data'   => 'data:image/jpeg;base64,' . base64_encode($jpeg),
+            'file_path'   => $path,
+            'file_data'   => $url,
             'file_type'   => 'image/jpeg',
-            'file_size'   => strlen($jpeg),
+            'file_size'   => $file->getSize(),
             'uploaded_by' => $uploadedBy,
             'created_at'  => now(),
             'updated_at'  => now(),
@@ -73,6 +35,19 @@ class PhotoHelper
 
     public static function delete(string $sourceType, int $sourceId): void
     {
+        $storage = app(SupabaseStorageService::class);
+
+        $photos = DB::table('photos')
+            ->where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->get();
+
+        foreach ($photos as $photo) {
+            if (!empty($photo->file_path)) {
+                $storage->delete($photo->file_path);
+            }
+        }
+
         DB::table('photos')
             ->where('source_type', $sourceType)
             ->where('source_id', $sourceId)
@@ -82,6 +57,15 @@ class PhotoHelper
     public static function url(?object $photo): ?string
     {
         if (!$photo) return null;
-        return !empty($photo->file_data) ? $photo->file_data : null;
+
+        if (!empty($photo->file_path)) {
+            return app(SupabaseStorageService::class)->publicUrl($photo->file_path);
+        }
+
+        if (!empty($photo->file_data)) {
+            return $photo->file_data;
+        }
+
+        return null;
     }
 }
