@@ -43,6 +43,7 @@ mkdir -p /var/www/html/storage/app/public/upload/photos/event
 mkdir -p /var/www/html/storage/app/public/upload/photos/announcement
 mkdir -p /var/www/html/storage/app/public/upload/photos/anonymous_report
 mkdir -p /var/www/html/storage/app/public/uploads/attachments/announcements
+composer require league/flysystem-aws-s3-v3 "^3.0" --with-all-dependencies
 
 echo "==> [bootstrap] Linking storage..."
 php artisan storage:link --force 2>/dev/null || true
