@@ -1,6 +1,3 @@
-# ─────────────────────────────────────────────────────────────
-# Stage 1 – Node: compile Tailwind / Vite assets
-# ─────────────────────────────────────────────────────────────
 FROM node:20-alpine AS node-builder
 
 WORKDIR /app
@@ -12,14 +9,38 @@ COPY resources/ resources/
 COPY vite.config.js ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
-COPY public/ public/ 
+COPY public/ public/
 
 RUN npm run build
 
-# ─────────────────────────────────────────────────────────────
-# Stage 2 – PHP: install Composer dependencies
-# ─────────────────────────────────────────────────────────────
-FROM composer:2.7 AS composer-builder
+FROM php:8.3-fpm-alpine AS composer-builder
+
+RUN apk add --no-cache \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    freetype-dev \
+    libzip-dev \
+    icu-dev \
+    oniguruma-dev \
+    postgresql-dev \
+    curl
+
+RUN docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+ && docker-php-ext-install -j$(nproc) \
+        pdo_pgsql \
+        pgsql \
+        gd \
+        zip \
+        intl \
+        mbstring \
+        bcmath \
+        pcntl
+
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
@@ -33,9 +54,6 @@ RUN composer install \
     --optimize-autoloader \
     --prefer-dist
 
-# ─────────────────────────────────────────────────────────────
-# Stage 3 – Runtime image
-# ─────────────────────────────────────────────────────────────
 FROM php:8.3-fpm-alpine
 
 RUN apk add --no-cache \
@@ -48,6 +66,7 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
+    postgresql-dev \
     curl \
     libintl
 
@@ -56,7 +75,8 @@ RUN docker-php-ext-configure gd \
         --with-jpeg \
         --with-webp \
  && docker-php-ext-install -j$(nproc) \
-        pdo_mysql \
+        pdo_pgsql \
+        pgsql \
         gd \
         zip \
         intl \
@@ -64,11 +84,6 @@ RUN docker-php-ext-configure gd \
         opcache \
         bcmath \
         pcntl
-
-RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del .build-deps
 
 WORKDIR /var/www/html
 
