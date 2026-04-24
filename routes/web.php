@@ -113,3 +113,33 @@ Route::middleware(['auth', 'superadmin'])->prefix('superadmin')->name('superadmi
         Route::delete('/{id}',[\App\Http\Controllers\Superadmin\CategoryController::class, 'destroy'])->name('destroy');
     });
 });
+
+// TEMPORARY DEBUG — hapus setelah selesai debug
+Route::get('/debug-info', function () {
+    try {
+        $pdo = new PDO(
+            'pgsql:host=' . env('DB_HOST') . ';port=' . env('DB_PORT') . ';dbname=' . env('DB_DATABASE') . ';sslmode=require',
+            env('DB_USERNAME'),
+            env('DB_PASSWORD'),
+            [PDO::ATTR_TIMEOUT => 5, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
+        $users = $pdo->query("SELECT id, identifier, role_id, status FROM users LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+        return response()->json([
+            'db' => 'OK',
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT'),
+            'user' => env('DB_USERNAME'),
+            'session_driver' => env('SESSION_DRIVER'),
+            'app_debug' => env('APP_DEBUG'),
+            'users' => $users,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'db' => 'FAIL',
+            'error' => $e->getMessage(),
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT'),
+            'user' => env('DB_USERNAME'),
+        ], 500);
+    }
+});
