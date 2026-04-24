@@ -4,67 +4,63 @@ set -e
 echo "==> [entrypoint] Starting SINTEM..."
 cd /var/www/html
 
-# ─────────────────────────────────────────────────────────────
-# 1. Write .env — support both Railway MySQL plugin vars and custom DB_* vars
-# ─────────────────────────────────────────────────────────────
-# Railway MySQL plugin injects: MYSQLHOST, MYSQLPORT, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE
-_DB_HOST="${MYSQLHOST:-${DB_HOST:-127.0.0.1}}"
-_DB_PORT="${MYSQLPORT:-${DB_PORT:-3306}}"
-_DB_USER="${MYSQLUSER:-${MYSQLUSER:-${DB_USERNAME:-root}}}"
-_DB_PASS="${MYSQLPASSWORD:-${DB_PASSWORD:-}}"
-_DB_NAME="${MYSQLDATABASE:-${DB_DATABASE:-sintem}}"
+_DB_HOST="${DB_HOST:-db.ehbmbivtxlnjobtpixsw.supabase.co}"
+_DB_PORT="${DB_PORT:-5432}"
+_DB_USER="${DB_USERNAME:-postgres}"
+_DB_PASS="${DB_PASSWORD:-sintempass12}"
+_DB_NAME="${DB_DATABASE:-postgres}"
+_SUPABASE_URL="${SUPABASE_URL:-https://ehbmbivtxlnjobtpixsw.supabase.co}"
+_SUPABASE_KEY="${SUPABASE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoYm1iaXZ0eGxuam9idHBpeHN3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njk0NjAyOCwiZXhwIjoyMDkyNTIyMDI4fQ.NBsfZmDmXMMPQOidSTu6c_OsQ6BvfNOobmeVY3qRDJQ}"
+_SUPABASE_BUCKET="${SUPABASE_BUCKET:-sintem-files}"
 
 cat > /var/www/html/.env << ENVEOF
 APP_NAME="${APP_NAME:-SINTEM}"
 APP_ENV="${APP_ENV:-production}"
 APP_KEY="${APP_KEY:-}"
-APP_DEBUG="${APP_DEBUG:-true}"
+APP_DEBUG="${APP_DEBUG:-false}"
 APP_URL="${APP_URL:-http://localhost}"
 
 LOG_CHANNEL=stderr
 LOG_LEVEL="${LOG_LEVEL:-debug}"
 
-DB_CONNECTION=mysql
+DB_CONNECTION=pgsql
 DB_HOST=${_DB_HOST}
 DB_PORT=${_DB_PORT}
 DB_DATABASE=${_DB_NAME}
 DB_USERNAME=${_DB_USER}
 DB_PASSWORD=${_DB_PASS}
+DB_SSLMODE=require
 
-SESSION_DRIVER=${SESSION_DRIVER:-database}
+SUPABASE_URL=${_SUPABASE_URL}
+SUPABASE_KEY=${_SUPABASE_KEY}
+SUPABASE_BUCKET=${_SUPABASE_BUCKET}
+
+SESSION_DRIVER=file
 SESSION_LIFETIME=${SESSION_LIFETIME:-120}
-SESSION_ENCRYPT=${SESSION_ENCRYPT:-false}
-SESSION_SECURE_COOKIE=${SESSION_SECURE_COOKIE:-true}
-SESSION_SAME_SITE=${SESSION_SAME_SITE:-lax}
+SESSION_ENCRYPT=false
+SESSION_SECURE_COOKIE=false
+SESSION_SAME_SITE=lax
 TRUSTED_PROXIES=*
 
-CACHE_STORE=database
+CACHE_STORE=file
 QUEUE_CONNECTION=sync
-FILESYSTEM_DISK=public
+FILESYSTEM_DISK=local
 ENVEOF
 
 echo "==> [entrypoint] .env written."
 
-# ─────────────────────────────────────────────────────────────
-# 2. Generate APP_KEY if not set
-# ─────────────────────────────────────────────────────────────
 if [ -z "$APP_KEY" ]; then
-    echo "WARNING: APP_KEY not set — generating temporary key."
+    echo "==> [entrypoint] Generating APP_KEY..."
     php artisan key:generate --force
 fi
 
-# ─────────────────────────────────────────────────────────────
-# 3. Wait for MySQL using PHP (works with Railway proxy + SSL)
-#    mysqladmin fails on Railway because the proxy requires a full
-#    TCP handshake that mysqladmin's ping doesn't complete properly.
-# ─────────────────────────────────────────────────────────────
-echo "==> [entrypoint] Waiting for MySQL at ${_DB_HOST}:${_DB_PORT}..."
+echo "==> [entrypoint] Waiting for PostgreSQL at ${_DB_HOST}:${_DB_PORT}..."
 max_tries=40
 count=0
 until php -r "
     try {
         \$pdo = new PDO(
-            'mysql:host=${_DB_HOST};port=${_DB_PORT};dbname=${_DB_NAME}',
+            'pgsql:host=${_DB_HOST};port=${_DB_PORT};dbname=${_DB_NAME};sslmode=require',
             '${_DB_USER}',
             '${_DB_PASS}',
             [PDO::ATTR_TIMEOUT => 5, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
@@ -76,56 +72,14 @@ until php -r "
 " 2>/dev/null; do
     count=$((count + 1))
     if [ $count -ge $max_tries ]; then
-        echo "ERROR: MySQL not reachable after $max_tries attempts. Aborting."
+        echo "ERROR: PostgreSQL not reachable after $max_tries attempts. Aborting."
         exit 1
     fi
     echo "   Attempt $count/$max_tries — retrying in 3s..."
     sleep 3
 done
-echo "==> [entrypoint] MySQL is ready."
+echo "==> [entrypoint] PostgreSQL is ready."
 
-# ─────────────────────────────────────────────────────────────
-# 4. Run migrations
-# ─────────────────────────────────────────────────────────────
-echo "==> [entrypoint] Running migrations..."
-php artisan migrate --force 2>&1
-
-# ─────────────────────────────────────────────────────────────
-# 5. Seed on first deploy only
-# ─────────────────────────────────────────────────────────────
-USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1)
-if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
-    echo "==> [entrypoint] Seeding initial data..."
-    php artisan db:seed --force
-else
-    echo "==> [entrypoint] Database already seeded — skipping."
-fi
-
-# ─────────────────────────────────────────────────────────────
-# 6. Ensure upload directories exist (storage is ephemeral on Railway)
-# ─────────────────────────────────────────────────────────────
-echo "==> [entrypoint] Creating storage directories..."
-mkdir -p storage/app/public/upload/photos/lost_found
-mkdir -p storage/app/public/upload/photos/event
-mkdir -p storage/app/public/upload/photos/announcement
-mkdir -p storage/app/public/upload/photos/anonymous_report
-mkdir -p storage/app/public/uploads/attachments/announcements
-mkdir -p storage/framework/cache/data
-mkdir -p storage/framework/sessions
-mkdir -p storage/framework/views
-mkdir -p storage/logs
-mkdir -p bootstrap/cache
-
-# ─────────────────────────────────────────────────────────────
-# 7. Create storage symlink (remove existing dir first to avoid conflict)
-# ─────────────────────────────────────────────────────────────
-echo "==> [entrypoint] Linking storage..."
-rm -rf public/storage
-php artisan storage:link --force
-
-# ─────────────────────────────────────────────────────────────
-# 8. Warm caches AFTER .env + DB are ready
-# ─────────────────────────────────────────────────────────────
 echo "==> [entrypoint] Clearing old caches..."
 php artisan config:clear
 php artisan route:clear
@@ -137,15 +91,15 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# ─────────────────────────────────────────────────────────────
-# 9. Fix permissions
-# ─────────────────────────────────────────────────────────────
-chown -R www-data:www-data storage bootstrap/cache public/storage
+mkdir -p storage/framework/cache/data \
+         storage/framework/sessions \
+         storage/framework/views \
+         storage/logs \
+         bootstrap/cache
+
+chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
 echo "==> [entrypoint] Bootstrap complete. Starting services..."
 
-# ─────────────────────────────────────────────────────────────
-# 10. Start nginx + php-fpm
-# ─────────────────────────────────────────────────────────────
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
