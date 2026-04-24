@@ -21,7 +21,7 @@ APP_DEBUG="${APP_DEBUG:-false}"
 APP_URL="${APP_URL:-http://localhost}"
 
 LOG_CHANNEL=stderr
-LOG_LEVEL="${LOG_LEVEL:-debug}"
+LOG_LEVEL="${LOG_LEVEL:-error}"
 
 DB_CONNECTION=pgsql
 DB_HOST=${_DB_HOST}
@@ -54,45 +54,13 @@ if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
 
-echo "==> [entrypoint] Testing PostgreSQL connection (Supabase Pooler)..."
-max_tries=20
-count=0
-until php -r "
-    try {
-        \$pdo = new PDO(
-            'pgsql:host=${_DB_HOST};port=${_DB_PORT};dbname=${_DB_NAME};sslmode=require',
-            '${_DB_USER}',
-            '${_DB_PASS}',
-            [PDO::ATTR_TIMEOUT => 10, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-        );
-        exit(0);
-    } catch (Exception \$e) {
-        fwrite(STDERR, \$e->getMessage() . PHP_EOL);
-        exit(1);
-    }
-" 2>/tmp/db_error; do
-    count=$((count + 1))
-    err=$(cat /tmp/db_error 2>/dev/null || echo "unknown")
-    if [ $count -ge $max_tries ]; then
-        echo "ERROR: PostgreSQL not reachable after $max_tries attempts."
-        echo "Last error: $err"
-        echo "Aborting."
-        exit 1
-    fi
-    echo "   Attempt $count/$max_tries — retrying in 3s... ($err)"
-    sleep 3
-done
-echo "==> [entrypoint] PostgreSQL is ready."
-
-echo "==> [entrypoint] Clearing caches..."
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-
-echo "==> [entrypoint] Warming caches..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+echo "==> [entrypoint] Clearing & warming caches..."
+php artisan config:clear 2>/dev/null || true
+php artisan route:clear  2>/dev/null || true
+php artisan view:clear   2>/dev/null || true
+php artisan config:cache 2>/dev/null || true
+php artisan route:cache  2>/dev/null || true
+php artisan view:cache   2>/dev/null || true
 
 mkdir -p storage/framework/cache/data \
          storage/framework/sessions \
